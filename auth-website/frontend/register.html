@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrasi — AuthPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loader"><span></span><span></span><span></span></div>
+  </div>
+
+  <div class="bg-animation">
+    <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+  </div>
+  <div class="grid-pattern"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">✨</div>
+        <h1>Buat Akun Baru</h1>
+        <p>Isi data di bawah untuk mendaftar</p>
+      </div>
+
+      <form id="registerForm" novalidate>
+        <div class="form-group">
+          <label for="regName">Nama Lengkap</label>
+          <div class="input-wrapper">
+            <input type="text" id="regName" class="form-input" placeholder="John Doe" autocomplete="name" required>
+            <span class="icon">👤</span>
+          </div>
+          <div class="error-msg" id="regNameError">Nama wajib diisi</div>
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <div class="input-wrapper">
+            <input type="email" id="regEmail" class="form-input" placeholder="nama@email.com" autocomplete="email" required>
+            <span class="icon">✉️</span>
+          </div>
+          <div class="error-msg" id="regEmailError">Masukkan email yang valid</div>
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="regPassword" class="form-input" placeholder="Minimal 8 karakter" autocomplete="new-password" required>
+            <span class="icon">🔒</span>
+            <button type="button" class="password-toggle" onclick="togglePassword('regPassword', this)">👁️</button>
+          </div>
+          <div class="error-msg" id="regPasswordError">Password minimal 8 karakter</div>
+          <div class="password-strength" id="passwordStrength">
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <span class="strength-text" id="strengthText"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regConfirmPassword">Konfirmasi Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="regConfirmPassword" class="form-input" placeholder="Ulangi password" autocomplete="new-password" required>
+            <span class="icon">🔒</span>
+            <button type="button" class="password-toggle" onclick="togglePassword('regConfirmPassword', this)">👁️</button>
+          </div>
+          <div class="error-msg" id="regConfirmError">Password tidak cocok</div>
+        </div>
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="agreeTerms" required>
+          <label for="agreeTerms">Saya setuju dengan <a href="#" class="auth-link">Syarat & Ketentuan</a></label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="registerBtn">
+          <span class="btn-text">Daftar</span>
+          <div class="spinner"></div>
+        </button>
+      </form>
+
+      <div class="divider"><span>atau</span></div>
+      <div class="auth-footer">
+        Sudah punya akun? <a href="index.html" class="auth-link">Masuk</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+</body>
+</html>

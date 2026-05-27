@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCB Control — AuthPro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .mcb-container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .mcb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .mcb-title { font-size: 24px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: var(--transition); }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .machine-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: var(--transition); position: relative; }
+    .machine-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .machine-name { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .machine-url { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; word-break: break-all; }
+    .machine-status { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 16px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+    .status-dot.online { background: var(--success); }
+    .status-dot.offline { background: var(--error); }
+    .machine-actions { display: flex; gap: 8px; }
+    .btn-action { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .btn-action:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-action.delete:hover { background: var(--danger); border-color: var(--danger); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow); }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 4px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .form-group input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 14px; font-family: inherit; outline: none; transition: var(--transition); }
+    .form-group input:focus { border-color: var(--primary); background: rgba(108,99,255,0.05); }
+    .form-group .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .sensor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .sensor-item label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: rgba(255,255,255,0.02); }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+    .error-msg { color: var(--danger); font-size: 12px; margin-top: 4px; display: none; }
+    .error-msg.show { display: block; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .empty-state h3 { margin: 0 0 8px 0; color: var(--text-primary); }
+    .empty-state p { margin: 0 0 20px 0; }
+    
+    /* ===== HAMBURGER & MOBILE SIDEBAR ===== */
+    .hamburger { display: none; flex-direction: column; gap: 4px; cursor: pointer; padding: 8px; border-radius: 6px; transition: var(--transition); background: transparent; border: none; }
+    .hamburger:hover { background: rgba(255,255,255,0.1); }
+    .hamburger span { width: 22px; height: 2px; background: var(--text-primary); border-radius: 2px; transition: var(--transition); display: block; }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+    .mobile-sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100vh; background: var(--bg-card); backdrop-filter: blur(20px); border-right: 1px solid var(--border); z-index: 4000; transition: left 0.3s ease; padding: 20px; display: flex; flex-direction: column; }
+    .mobile-sidebar.active { left: 0; box-shadow: var(--shadow); }
+    .mobile-sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 3999; display: none; backdrop-filter: blur(4px); }
+    .mobile-sidebar-overlay.active { display: block; animation: fadeIn 0.2s ease; }
+    .mobile-sidebar-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .mobile-sidebar-header .logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .mobile-sidebar-header span { font-weight: 600; font-size: 16px; }
+    .mobile-close { background: none; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; padding: 4px; transition: var(--transition); }
+    .mobile-close:hover { color: var(--text-primary); }
+    .mobile-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .mobile-nav-item { padding: 14px 16px; border-radius: 10px; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 15px; font-weight: 500; transition: var(--transition); }
+    .mobile-nav-item:hover, .mobile-nav-item.active { background: rgba(108,99,255,0.2); color: var(--primary); }
+    .mobile-nav-item .icon { font-size: 18px; }
+    .mobile-sidebar-footer { padding-top: 16px; border-top: 1px solid var(--border); margin-top: auto; }
+    .mobile-logout { width: 100%; padding: 12px; background: rgba(229,49,112,0.1); border: 1px solid rgba(229,49,112,0.3); border-radius: 8px; color: var(--danger); font-size: 14px; font-weight: 500; cursor: pointer; transition: var(--transition); font-family: inherit; }
+    .mobile-logout:hover { background: rgba(229,49,112,0.2); }
+    @media (max-width: 768px) { .hamburger { display: flex; } .nav-menu { display: none !important; } .dashboard-nav { padding: 12px 16px; } .nav-brand span { display: none; } .nav-brand .logo { margin: 0 auto; } }
+  </style>
+</head>
+<body>
+  <div class="loading-overlay" id="loadingOverlay"><div class="loader"><span></span><span></span><span></span></div></div>
+  <div class="bg-animation"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+  <div class="grid-pattern"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="dashboard-container">
+    
+    <!-- ===== NAVBAR DENGAN HAMBURGER ===== -->
+    <nav class="dashboard-nav">
+      <!-- Hamburger Button -->
+      <button class="hamburger" id="hamburgerBtn" onclick="App.toggleMobileMenu()" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      
+      <!-- Brand -->
+      <a href="dashboard.html" class="nav-brand" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px">
+        <span>MCB Control</span>
+      </a>
+      
+      <!-- Desktop Nav -->
+      <div class="nav-menu" style="display:flex;gap:8px;margin-left:auto">
+        <a href="dashboard.html" class="btn-nav" style="padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;transition:var(--transition)">
+          🏠 Dashboard
+        </a>
+      </div>
+      
+      <!-- User Actions -->
+      <div class="nav-user" style="margin-left:8px">
+        <button class="btn-logout" onclick="App.logout()">Keluar</button>
+      </div>
+    </nav>
+
+    <!-- ===== MOBILE SIDEBAR ===== -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+      <div class="mobile-sidebar-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span>Menu</span>
+        </div>
+        <button class="mobile-close" onclick="App.toggleMobileMenu()">✕</button>
+      </div>
+      <nav class="mobile-nav">
+        <a href="dashboard.html" class="mobile-nav-item" onclick="App.toggleMobileMenu()">
+          <span class="icon">🏠</span> Dashboard
+        </a>
+        <a href="mcb-control.html" class="mobile-nav-item active" onclick="App.toggleMobileMenu()">
+          <span class="icon">⚙️</span> MCB Control
+        </a>
+      </nav>
+      <div class="mobile-sidebar-footer">
+        <button class="mobile-logout" onclick="App.logout();App.toggleMobileMenu()">🚪 Keluar</button>
+      </div>
+    </div>
+    <div class="mobile-sidebar-overlay" id="mobileOverlay" onclick="App.toggleMobileMenu()"></div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="mcb-container">
+      <div class="mcb-header">
+        <h1 class="mcb-title">Manajemen Mesin</h1>
+        <button class="btn-primary" onclick="App.openModal('add')">➕ Tambah Mesin</button>
+      </div>
+      <div id="machineList" class="machine-grid"></div>
+      <div id="emptyState" class="empty-state" style="display:none">
+        <h3>📭 Belum ada mesin terdaftar</h3>
+        <p>Klik tombol "Tambah Mesin" untuk mulai registrasi.</p>
+        <button class="btn-primary" onclick="App.openModal('add')">➕ Tambah Mesin Pertama</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Form -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Tambah Mesin</h3>
+        <button class="modal-close" onclick="App.closeModal()">✕</button>
+      </div>
+      <form id="machineForm" class="modal-body">
+        <input type="hidden" id="machineId">
+        <div class="form-group">
+          <label>Nama Mesin *</label>
+          <input type="text" id="machineName" placeholder="Contoh: Mesin Produksi 1" required>
+        </div>
+        <div class="form-group">
+          <label>Home Assistant URL *</label>
+          <input type="url" id="haUrl" placeholder="http://192.168.1.100:8123" required>
+        </div>
+        <div class="form-group">
+          <label>Long-Lived Access Token *</label>
+          <input type="password" id="haToken" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required>
+          <div class="hint">Buat di HA: Profile → Long-Lived Access Tokens</div>
+        </div>
+        <div class="form-group">
+          <label>📡 Sensor Entities</label>
+          <div class="sensor-grid">
+            <div class="sensor-item"><label>Current (A)</label><input type="text" id="sensorCurrent" placeholder="sensor.xxx_current" required></div>
+            <div class="sensor-item"><label>Power (W)</label><input type="text" id="sensorPower" placeholder="sensor.xxx_power" required></div>
+            <div class="sensor-item"><label>Voltage (V)</label><input type="text" id="sensorVoltage" placeholder="sensor.xxx_voltage" required></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>🔘 Switch Entity *</label>
+          <input type="text" id="switchEntity" placeholder="switch.xxx_smart_switch" required>
+        </div>
+        <div class="form-group">
+          <button type="button" class="btn-secondary" onclick="App.testConnection()" id="testBtn">🔍 Test Koneksi</button>
+          <span id="testResult" style="margin-left:10px;font-size:13px"></span>
+        </div>
+        <div class="error-msg" id="formError"></div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="App.closeModal()">Batal</button>
+        <button type="submit" form="machineForm" class="btn-primary">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/mcb-manager.js"></script>
+  <script>
+    const App = {
+      // ===== AUTH CHECK =====
+      init() {
+        const token = localStorage.getItem('authToken');
+        if (!token) { window.location.href = 'index.html'; return; }
+        this.renderMachineList();
+        document.getElementById('machineForm').addEventListener('submit', (e) => { e.preventDefault(); this.saveMachine(); });
+        document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') this.closeModal(); });
+      },
+      
+      // ===== MOBILE MENU TOGGLE =====
+      toggleMobileMenu() {
+        const sidebar = document.getElementById('mobileSidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        const hamburger = document.getElementById('hamburgerBtn');
+        if (!sidebar || !overlay || !hamburger) return;
+        const isActive = sidebar.classList.contains('active');
+        if (isActive) {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+          hamburger.classList.remove('active');
+          document.body.style.overflow = '';
+        } else {
+          sidebar.classList.add('active');
+          overlay.classList.add('active');
+          hamburger.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+      },
+      
+      // ===== RENDER LIST =====
+      async renderMachineList() {
+        const list = document.getElementById('machineList');
+        const empty = document.getElementById('emptyState');
+        try {
+          showLoading?.();
+          const machines = await MCBManager.getAll();
+          if (machines.length === 0) { list.style.display = 'none'; empty.style.display = 'block'; return; }
+          list.style.display = 'grid'; empty.style.display = 'none';
+          list.innerHTML = machines.map(m => `
+            <div class="machine-card" data-id="${m.id}">
+              <div class="machine-name">${this.escapeHtml(m.name)}</div>
+              <div class="machine-url">${this.escapeHtml(m.ha_url)}</div>
+              <div class="machine-status">
+                <span class="status-dot ${m.last_connected_at ? 'online' : 'offline'}"></span>
+                <span>${m.last_connected_at ? 'Online' : 'Belum terhubung'}</span>
+              </div>
+              <div class="machine-actions">
+                <button class="btn-action" onclick="App.viewMachine('${m.id}')">Lihat</button>
+                <button class="btn-action" onclick="App.openModal('edit', '${m.id}')">Edit</button>
+                <button class="btn-action delete" onclick="App.deleteMachine('${m.id}')">Hapus</button>
+              </div>
+            </div>
+          `).join('');
+        } catch (err) { showToast('❌ Gagal memuat data mesin', 'error'); console.error(err); }
+        finally { hideLoading?.(); }
+      },
+      
+      // ===== MODAL =====
+      openModal(mode, machineId = null) {
+        const modal = document.getElementById('modalOverlay');
+        const title = document.getElementById('modalTitle');
+        const form = document.getElementById('machineForm');
+        const testBtn = document.getElementById('testBtn');
+        form.reset(); document.getElementById('formError').classList.remove('show'); document.getElementById('testResult').textContent = '';
+        if (mode === 'add') { title.textContent = 'Tambah Mesin'; document.getElementById('machineId').value = ''; testBtn.disabled = true; }
+        else if (mode === 'edit' && machineId) {
+          title.textContent = 'Edit Mesin'; document.getElementById('machineId').value = machineId;
+          MCBManager.getAll().then(machines => {
+            const m = machines.find(x => x.id == machineId);
+            if (m) {
+              document.getElementById('machineName').value = m.name;
+              document.getElementById('haUrl').value = m.ha_url;
+              document.getElementById('haToken').value = m.ha_token;
+              document.getElementById('sensorCurrent').value = m.sensors?.current || '';
+              document.getElementById('sensorPower').value = m.sensors?.power || '';
+              document.getElementById('sensorVoltage').value = m.sensors?.voltage || '';
+              document.getElementById('switchEntity').value = m.switch_entity;
+              testBtn.disabled = false;
+            }
+          });
+        }
+        modal.classList.add('active');
+      },
+      closeModal() { document.getElementById('modalOverlay').classList.remove('active'); },
+      
+      // ===== SAVE =====
+      async saveMachine() {
+        const id = document.getElementById('machineId').value;
+        const machine = {
+          name: document.getElementById('machineName').value, haUrl: document.getElementById('haUrl').value,
+          haToken: document.getElementById('haToken').value,
+          sensors: { current: document.getElementById('sensorCurrent').value, power: document.getElementById('sensorPower').value, voltage: document.getElementById('sensorVoltage').value },
+          switchEntity: document.getElementById('switchEntity').value
+        };
+        const validation = MCBManager.validate(machine);
+        if (!validation.valid) { const err = document.getElementById('formError'); err.textContent = validation.errors.join(', '); err.classList.add('show'); return; }
+        try {
+          if (id) { await MCBManager.update(id, machine); showToast('✅ Mesin berhasil diperbarui', 'success'); }
+          else { await MCBManager.add(machine); showToast('✅ Mesin berhasil ditambahkan', 'success'); }
+          this.closeModal(); await this.renderMachineList();
+        } catch (err) { showToast('❌ Gagal: ' + err.message, 'error'); }
+      },
+      
+      // ===== DELETE =====
+      async deleteMachine(id) {
+        const m = await MCBManager.getById(id); if (!m) return;
+        if (confirm(`Hapus mesin "${m.name}"?\n\nData tidak dapat dikembalikan.`)) {
+          try { await MCBManager.delete(id); showToast('✅ Mesin dihapus', 'success'); await this.renderMachineList(); }
+          catch (err) { showToast('❌ Gagal menghapus: ' + err.message, 'error'); }
+        }
+      },
+      
+      // ===== VIEW =====
+      viewMachine(id) { sessionStorage.setItem('currentMachineId', id); window.location.href = 'machine-view.html'; },
+      
+      // ===== TEST CONNECTION =====
+      async testConnection() {
+        const btn = document.getElementById('testBtn'), result = document.getElementById('testResult'), id = document.getElementById('machineId').value;
+        if (!id) { result.textContent = '⚠️ Simpan dulu untuk test'; result.style.color = 'var(--warning)'; return; }
+        btn.disabled = true; btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px"></span> Testing...'; result.textContent = '';
+        try {
+          const res = await MCBManager.testConnection(id);
+          if (res.connected) { result.textContent = '✅ Terhubung!'; result.style.color = 'var(--success)'; }
+          else { result.textContent = `❌ Gagal: ${res.error || 'Status ' + res.status}`; result.style.color = 'var(--error)'; }
+        } catch (err) { result.textContent = `❌ Error: ${err.message}`; result.style.color = 'var(--error)'; }
+        finally { btn.disabled = false; btn.textContent = '🔍 Test Koneksi'; }
+      },
+      
+      // ===== UTILS =====
+      escapeHtml(str) { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; },
+      logout() { localStorage.removeItem('authToken'); localStorage.removeItem('authUser'); window.location.href = 'index.html'; }
+    };
+    document.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>s

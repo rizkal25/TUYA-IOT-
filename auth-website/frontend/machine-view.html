@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Machine — MCB Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ===== BASE VARIABLES ===== */
+    :root {
+      --primary: #6c63ff; --primary-glow: rgba(108, 99, 255, 0.4);
+      --success: #2cb67d; --success-glow: rgba(44, 182, 125, 0.3);
+      --error: #e53170; --error-glow: rgba(229, 49, 112, 0.3);
+      --text: #ffffff; --text-dim: #a0a0b0; --text-muted: #6b6b80;
+      --bg: #0f0f23; --bg-gradient: linear-gradient(135deg, #0f0f23 0%, #1a1a3a 100%);
+      --card: rgba(255, 255, 255, 0.04); --card-hover: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.08); --border-hover: rgba(108, 99, 255, 0.4);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4); --shadow-glow: 0 0 20px var(--primary-glow);
+      --radius: 12px; --radius-lg: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ===== BASE RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* ===== ANIMATED BACKGROUND ===== */
+    .bg-animation {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .bg-animation::before, .bg-animation::after {
+      content: ''; position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.3; animation: float 20s ease-in-out infinite;
+    }
+    .bg-animation::before {
+      width: 500px; height: 500px; background: var(--primary);
+      top: -150px; right: -150px; animation-delay: 0s;
+    }
+    .bg-animation::after {
+      width: 400px; height: 400px; background: var(--success);
+      bottom: -100px; left: -100px; animation-delay: -10s;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.05); }
+      66% { transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    /* ===== GRID PATTERN ===== */
+    .grid-pattern {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px; z-index: 0; pointer-events: none;
+    }
+
+    /* ===== MAIN LAYOUT ===== */
+    .view { display: flex; height: 100vh; position: relative; z-index: 1; }
+    
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 220px; background: rgba(15, 15, 35, 0.85);
+      backdrop-filter: blur(20px); border-right: 1px solid var(--border);
+      padding: 20px 16px; display: flex; flex-direction: column;
+      transition: var(--transition);
+    }
+    .sidebar:hover { background: rgba(15, 15, 35, 0.95); }
+    
+    #sTitle {
+      font-weight: 700; font-size: 18px; margin-bottom: 24px;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, var(--primary), var(--text));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: shimmer 2s ease-in-out infinite;
+      background-size: 200% auto;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    .nav {
+      padding: 12px 14px; border-radius: 10px; color: var(--text-dim);
+      margin-bottom: 6px; cursor: pointer; transition: var(--transition);
+      display: flex; align-items: center; gap: 10px; font-weight: 500;
+      position: relative; overflow: hidden;
+    }
+    .nav::before {
+      content: ''; position: absolute; left: 0; top: 0; height: 100%;
+      width: 3px; background: var(--primary); transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+    .nav:hover {
+      background: rgba(108, 99, 255, 0.15); color: var(--text);
+      transform: translateX(4px);
+    }
+    .nav:hover::before { transform: scaleY(1); }
+    .nav.active {
+      background: rgba(108, 99, 255, 0.25); color: var(--primary);
+      box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+    }
+    .nav.active::before { transform: scaleY(1); }
+    
+    .btn-back {
+      width: 100%; padding: 12px; background: transparent;
+      border: 1px solid var(--border); color: var(--text-dim);
+      border-radius: 10px; cursor: pointer; margin-top: auto;
+      transition: var(--transition); font-weight: 500;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.1); color: var(--text);
+      border-color: var(--primary); transform: translateY(-2px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .content {
+      flex: 1; padding: 32px; overflow-y: auto;
+      background: linear-gradient(180deg, transparent 0%, rgba(15,15,35,0.5) 100%);
+    }
+    
+    #pTitle {
+      font-size: 24px; font-weight: 700; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 10px;
+      animation: slideDown 0.4s ease-out;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== SECTIONS ANIMATION ===== */
+    .sec { display: none; animation: fadeInUp 0.4s ease-out; }
+    .sec.active { display: block; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== STATUS CARDS ===== */
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 16px; margin: 20px 0;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px; text-align: center;
+      transition: var(--transition); position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 110px;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s ease;
+    }
+    .card:hover {
+      background: var(--card-hover); border-color: var(--border-hover);
+      transform: translateY(-4px); box-shadow: var(--shadow);
+    }
+    .card:hover::before { left: 100%; }
+    .card > div:first-child {
+      font-size: 12px; color: var(--text-muted); margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .val {
+      font-size: 20px; font-weight: 700; margin-top: 4px;
+      background: linear-gradient(135deg, var(--text), var(--primary-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      transition: transform 0.2s ease;
+    }
+    .card:hover .val { transform: scale(1.05); }
+
+    /* ===== CONTROL BUTTONS ===== */
+    .btn {
+      padding: 12px 28px; border-radius: 10px; border: none;
+      cursor: pointer; margin: 6px; font-weight: 600; font-size: 14px;
+      transition: var(--transition); position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 0; height: 0; background: rgba(255,255,255,0.2);
+      border-radius: 50%; transform: translate(-50%, -50%);
+      transition: width 0.4s ease, height 0.4s ease;
+    }
+    .btn:active::after { width: 300px; height: 300px; }
+    
+    .btn-on {
+      background: linear-gradient(135deg, var(--success), #1e9a6a);
+      color: white; box-shadow: 0 4px 15px var(--success-glow);
+    }
+    .btn-on:hover {
+      transform: translateY(-2px); box-shadow: 0 8px 25px var(--success-glow);
+    }
+    .btn-off {
+      background: linear-gradient(135deg, var(--error), #c4255a);
+      color: white; box-shadow: 0 4px 15px var(--error-glow);
+    }
+    .btn-off:hover {
+      transform: translateY(-2px); box-shadow: 0 8px 25px var(--error-glow);
+    }
+
+    /* ===== SAVE BUTTON ===== */
+    .btn-save {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white; border: none; padding: 12px 28px; border-radius: 10px;
+      cursor: pointer; font-weight: 600; font-size: 14px;
+      transition: var(--transition); position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+    .btn-save::before {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-save:hover {
+      transform: translateY(-2px); box-shadow: 0 8px 25px var(--primary-glow);
+    }
+    .btn-save:hover::before { left: 100%; }
+
+    /* ===== FORMS ===== */
+    .form input, .form select {
+      width: 100%; padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 14px; margin: 6px 0;
+      transition: var(--transition); outline: none;
+    }
+    .form input:focus, .form select:focus {
+      border-color: var(--primary); background: rgba(108, 99, 255, 0.1);
+      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+    }
+    .form input::placeholder { color: var(--text-muted); }
+    .form label {
+      font-size: 12px; color: var(--text-muted); display: block;
+      margin-bottom: 6px; font-weight: 500; text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== LIST ITEMS ===== */
+    .item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; margin: 10px 0;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: var(--transition); animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .item:hover {
+      background: var(--card-hover); border-color: var(--border-hover);
+      transform: translateX(4px);
+    }
+    .del {
+      background: none; border: none; color: var(--error);
+      cursor: pointer; font-size: 18px; padding: 6px; border-radius: 6px;
+      transition: var(--transition); opacity: 0.7;
+    }
+    .del:hover {
+      background: rgba(229, 49, 112, 0.15); opacity: 1;
+      transform: scale(1.1);
+    }
+
+    /* ===== CYCLE TIMER FORM ===== */
+    .cyc-form {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px; margin: 20px 0;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .day-checks {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+    }
+    .day-checks label {
+      font-size: 12px; cursor: pointer; display: flex; align-items: center;
+      gap: 6px; padding: 6px 12px; border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    .day-checks label:hover {
+      background: rgba(108, 99, 255, 0.15); border-color: var(--primary);
+    }
+    .day-checks input[type="checkbox"] {
+      accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;
+    }
+    
+    .time-inputs {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+    }
+
+    /* ===== TABLE ===== */
+    .table-container {
+      overflow-x: auto; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--card);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+    th {
+      padding: 14px 12px; text-align: center; font-weight: 600;
+      color: var(--text-dim); text-transform: uppercase; font-size: 11px;
+      letter-spacing: 1px; border-bottom: 2px solid var(--border);
+      background: rgba(108, 99, 255, 0.1); position: sticky; top: 0; z-index: 10;
+    }
+    td {
+      padding: 12px; border-bottom: 1px solid var(--border); text-align: center;
+      transition: background 0.2s;
+    }
+    tr:hover td { background: rgba(255, 255, 255, 0.05); }
+    
+    /* Color coding for table values */
+    #hTbl td:nth-child(4) { color: var(--success); font-weight: 500; }
+    #hTbl td:nth-child(7) { color: var(--primary); font-weight: 500; }
+    #hTbl td:nth-child(8) { color: var(--warning); }
+    #hTbl td:nth-child(9) { color: var(--success); }
+
+    /* ===== TOAST NOTIFICATIONS ===== */
+    .toast {
+      position: fixed; top: 24px; right: 24px;
+      background: rgba(26, 26, 46, 0.95); backdrop-filter: blur(12px);
+      border-left: 4px solid var(--primary); padding: 14px 20px;
+      border-radius: 10px; z-index: 9999;
+      animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                 fadeOut 0.4s ease 3.6s forwards;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: var(--shadow); min-width: 280px;
+    }
+    .toast.ok { border-color: var(--success); }
+    .toast.err { border-color: var(--error); }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateX(20px); }
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1); border-radius: 4px;
+      transition: background 0.2s;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+    .content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .view { flex-direction: column; }
+      .sidebar {
+        width: 100%; height: auto; border-right: none;
+        border-bottom: 1px solid var(--border); padding: 12px;
+      }
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .time-inputs { grid-template-columns: 1fr; }
+      .content { padding: 20px 16px; }
+      #pTitle { font-size: 20px; }
+      .card { min-height: 100px; padding: 16px; }
+      .val { font-size: 18px; }
+    }
+
+    /* ===== PULSE ANIMATION FOR EMPTY STATES ===== */
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.2); }
+      50% { box-shadow: 0 0 0 15px rgba(108, 99, 255, 0); }
+    }
+
+    /* ===== RELAY CARD SPECIAL STYLING ===== */
+    #cardRelay {
+      border-width: 2px !important;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    #vRelay {
+      font-size: 24px !important;
+      font-weight: 800 !important;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+    #cardRelay[status="on"] {
+      border-color: var(--success) !important;
+      box-shadow: 0 0 20px var(--success-glow);
+    }
+    #cardRelay[status="off"] {
+      border-color: var(--error) !important;
+      box-shadow: 0 0 20px var(--error-glow);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation"></div>
+  <div class="grid-pattern"></div>
+
+  <div class="view">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div id="sTitle">MCB Control</div>
+      <nav>
+        <div class="nav active" onclick="A.go('dash')">Dashboard</div>
+        <div class="nav" onclick="A.go('sch')">Schedule</div>
+        <div class="nav" onclick="A.go('cyc')">Cycle</div>
+        <div class="nav" onclick="A.go('grp')">Grafik</div>
+        <div class="nav" onclick="A.go('hist')">Riwayat</div>
+        <div class="nav" onclick="A.go('set')">Protection</div>
+      </nav>
+      <button class="btn-back" onclick="A.back()">← Kembali</button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      <h2 id="pTitle">📊 Dashboard</h2>
+      
+      <!-- DASHBOARD -->
+      <div id="s-dash" class="sec active">
+        <!-- Monitoring Grid (9 Cards termasuk Relay) -->
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+          
+          <!-- 🔘 Relay Status -->
+          <div class="card" id="cardRelay" style="border-color: var(--error);">
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px">
+              <span style="font-size:18px">🔘</span>
+              <span style="font-size:12px;color:var(--text-muted)">Relay</span>
+            </div>
+            <div class="val" id="vRelay" style="color: var(--error);">OFF</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Status</div>
+          </div>
+          
+          <!-- Voltage -->
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px">
+              <span style="font-size:12px;color:var(--text-muted)">Voltage</span>
+            </div>
+            <div class="val" id="vVolt">- V</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">RMS</div>
+          </div>
+          
+          <!-- Current -->
+          <div class="card">
+            <div><span style="margin-left:4px">Current</span></div>
+            <div class="val" id="vCurr">- A</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">RMS</div>
+          </div>
+          
+          <!-- Power -->
+          <div class="card">
+            <div><span style="margin-left:4px">Power</span></div>
+            <div class="val" id="vPow">- W</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Aktif</div>
+          </div>
+          
+          <!-- Apparent Power -->
+          <div class="card">
+            <div><span style="margin-left:4px">Apparent</span></div>
+            <div class="val" id="vApparent">- VA</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Semu</div>
+          </div>
+          
+          <!-- Power Factor -->
+          <div class="card">
+            <div><span style="margin-left:4px">Power Factor</span></div>
+            <div class="val" id="vPf">- PF</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Cos φ</div>
+          </div>
+          
+          <!-- Energy -->
+          <div class="card">
+            <div><span style="margin-left:4px">Energy</span></div>
+            <div class="val" id="vEnergy">- kWh</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Total</div>
+          </div>
+          
+          <!-- Peak Power -->
+          <div class="card">
+            <div><span style="margin-left:4px">Peak</span></div>
+            <div class="val" id="vPeak">- W</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Maks</div>
+          </div>
+          
+          <!-- Carbon -->
+          <div class="card">
+            <div><span style="margin-left:4px">Carbon</span></div>
+            <div class="val" id="vCarbon">- kg</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px">CO₂</div>
+          </div>
+        </div>
+        
+        <!-- Control Buttons -->
+        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <button class="btn btn-on" onclick="A.ctrl('on')">TURN ON</button>
+          <button class="btn btn-off" onclick="A.ctrl('off')">TURN OFF</button>
+        </div>
+        
+        <!-- Status Indicator -->
+        <div style="margin-top:20px;text-align:center">
+          <span id="vStatus" style="font-size:13px;color:var(--text-muted);padding:8px 16px;background:var(--card);border-radius:20px;border:1px solid var(--border)">
+            ● Menunggu data...
+          </span>
+        </div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div id="s-sch" class="sec">
+        <h3 style="margin-bottom:20px;font-weight:600">Schedule</h3>
+        <div class="grid">
+          <div class="form">
+            <label>Hari</label>
+            <select id="schDay">
+              <option value="0">Senin</option><option value="1">Selasa</option>
+              <option value="2">Rabu</option><option value="3">Kamis</option>
+              <option value="4">Jumat</option><option value="5">Sabtu</option>
+              <option value="6">Minggu</option>
+            </select>
+          </div>
+          <div class="form">
+            <label>Waktu</label>
+            <input type="time" id="schTime" value="08:00">
+          </div>
+          <div class="form">
+            <label>Aksi</label>
+            <select id="schAct">
+              <option value="true">🟢 ON</option><option value="false">🔴 OFF</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-save" onclick="A.addSch()">➕ Tambah Jadwal</button>
+        <div id="schList" style="margin-top:20px"></div>
+      </div>
+
+      <!-- CYCLE TIMER -->
+      <div id="s-cyc" class="sec">
+        <h3 style="margin-bottom:20px;font-weight:600">🔄 Cycle Timer</h3>
+        <div class="cyc-form">
+          <h4 style="margin:0 0 16px 0;font-size:14px;color:var(--text-dim)">➕ Tambah Cycle Timer</h4>
+          <div style="margin-bottom:16px">
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px">Hari:</label>
+            <div class="day-checks">
+              <label><input type="checkbox" class="cycDay" value="0"> Sen</label>
+              <label><input type="checkbox" class="cycDay" value="1"> Sel</label>
+              <label><input type="checkbox" class="cycDay" value="2"> Rab</label>
+              <label><input type="checkbox" class="cycDay" value="3"> Kam</label>
+              <label><input type="checkbox" class="cycDay" value="4"> Jum</label>
+              <label><input type="checkbox" class="cycDay" value="5"> Sab</label>
+              <label><input type="checkbox" class="cycDay" value="6"> Min</label>
+            </div>
+          </div>
+          <div class="time-inputs">
+            <div class="form"><label>🟢 Waktu NYALA</label><input type="time" id="cycOn" value="08:00"></div>
+            <div class="form"><label>🔴 Waktu MATI</label><input type="time" id="cycOff" value="17:00"></div>
+          </div>
+          <button class="btn-save" onclick="A.addCyc()" style="width:100%">Simpan Cycle Timer</button>
+        </div>
+        <h4 style="margin:24px 0 12px 0;font-size:14px;color:var(--text-dim)">Aktif</h4>
+        <div id="cycList"><p style="color:var(--text-muted);padding:20px;text-align:center;opacity:0.8">Memuat cycle timer...</p></div>
+      </div>
+
+      <!-- GRAPH -->
+      <div id="s-grp" class="sec">
+        <h3 style="margin-bottom:20px;font-weight:600">Grafik kWh</h3>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;text-align:center;animation:pulse 2s ease-in-out infinite">
+          <p style="color:var(--text-muted);margin-bottom:8px">Butuh data historis untuk menampilkan grafik</p>
+          <p style="font-size:13px;color:var(--text-dim)">Data akan muncul setelah mesin mengirim pembacaan meter</p>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div id="s-hist" class="sec">
+        <h3 style="margin-bottom:20px;font-weight:600">Riwayat Pembacaan</h3>
+        <div class="grid" style="max-width:320px;margin-bottom:16px">
+          <div class="form"><label>Dari Tanggal</label><input type="date" id="hStart"></div>
+          <div class="form"><label>Sampai Tanggal</label><input type="date" id="hEnd"></div>
+        </div>
+        <button class="btn-save" onclick="A.loadHist()" style="margin-bottom:20px">🔍 Tampilkan Data</button>
+        <div class="table-container">
+          <table id="hTbl">
+            <thead>
+              <tr>
+                <th>Waktu</th><th>V</th><th>A</th><th>W</th>
+                <th>VA</th><th>PF</th><th>kWh</th><th>Peak</th><th>CO₂</th>
+              </tr>
+            </thead>
+            <tbody id="hBody"></tbody>
+          </table>
+        </div>
+        <div id="hEmpty" style="display:none;text-align:center;padding:40px;color:var(--text-muted)">
+          <div style="font-size:48px;margin-bottom:16px">📭</div>
+          <p>Belum ada data riwayat untuk periode ini</p>
+          <p style="font-size:13px;margin-top:8px">Pilih tanggal lain atau tunggu mesin mengirim data</p>
+        </div>
+      </div>
+
+      <!-- SETTINGS / PROTECTION -->
+      <div id="s-set" class="sec">
+        <h3 style="margin-bottom:20px;font-weight:600">Batas Proteksi</h3>
+        <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px">
+          Atur batas aman untuk auto-shutdown jika nilai terlampaui
+        </p>
+        <div class="grid">
+          <div class="form"><label>Max Current (A)</label><input type="number" step="0.1" id="setI" placeholder="10.0"></div>
+          <div class="form"><label>Max Voltage (V)</label><input type="number" step="0.1" id="setV" placeholder="240"></div>
+          <div class="form"><label>Max Power (W)</label><input type="number" id="setP" placeholder="2000"></div>
+        </div>
+        <button class="btn-save" onclick="A.saveSet()" style="margin-top:20px">Simpan Limits</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/auth.js"></script>
+  <script src="js/mcb-manager.js"></script>
+  <script>
+    const API = 'http://127.0.0.1:3001/api/auth';
+    
+    // Enhanced toast with animation
+    function toast(m, t = 'info') {
+      const e = document.createElement('div');
+      e.className = `toast ${t === 'ok' ? 'ok' : t === 'err' ? 'err' : ''}`;
+      e.innerHTML = `<span style="font-size:18px">${t === 'ok' ? '✅' : t === 'err' ? '❌' : 'ℹ️'}</span><span>${m}</span>`;
+      document.body.appendChild(e);
+      setTimeout(() => {
+        e.style.animation = 'fadeOut 0.4s ease forwards';
+        setTimeout(() => e.remove(), 400);
+      }, 3600);
+    }
+    
+    const A = {
+      id: null, m: null,
+      
+      async init() {
+        const t = localStorage.getItem('authToken');
+        if (!t) { location.href = 'index.html'; return; }
+        this.id = sessionStorage.getItem('currentMachineId');
+        if (!this.id) { location.href = 'mcb-control.html'; return; }
+        try {
+          const r = await fetch(`${API}/mcb-machines/${this.id}`, {
+            headers: { 'Authorization': `Bearer ${t}` }
+          });
+          const d = await r.json();
+          if (!d.success) throw new Error(d.message);
+          this.m = d.machine;
+          document.getElementById('sTitle').textContent = this.m.name;
+          document.getElementById('setI').value = this.m.max_current || 10;
+          document.getElementById('setV').value = this.m.max_voltage || 240;
+          document.getElementById('setP').value = this.m.max_power || 2000;
+          this.fs(); this.ls();
+        } catch (e) {
+          toast('Gagal: ' + e.message, 'err');
+          setTimeout(() => location.href = 'mcb-control.html', 2000);
+        }
+      },
+      
+      go(s) {
+        try {
+          // Hide all sections
+          document.querySelectorAll('.sec').forEach(e => {
+            e.style.animation = 'none';
+            e.offsetHeight; // Trigger reflow
+            e.classList.remove('active');
+          });
+          
+          // Remove active from all nav items
+          document.querySelectorAll('.nav').forEach(e => e.classList.remove('active'));
+          
+          // Show target section
+          const target = document.getElementById('s-' + s);
+          if (target) target.classList.add('active');
+          
+          // Highlight clicked nav item (safe event handling)
+          if (event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+          } else {
+            // Fallback: find nav by index match
+            const navItems = document.querySelectorAll('.nav');
+            const titles = {dash:0, sch:1, cyc:2, grp:3, hist:4, set:5};
+            if (titles[s] !== undefined && navItems[titles[s]]) {
+              navItems[titles[s]].classList.add('active');
+            }
+          }
+          
+          // Update page title
+          const tl = {
+            dash: 'Dashboard', sch: 'Schedule', cyc: 'Cycle',
+            grp: 'Grafik', hist: 'Riwayat', set: 'Protection'
+          };
+          document.getElementById('pTitle').textContent = tl[s];
+          
+          // Load data for specific sections
+          if (s === 'grp') this.lg();
+          if (s === 'hist') this.lh();
+          if (s === 'sch') this.ls();
+          if (s === 'cyc') this.loadCyc();
+          
+        } catch (err) {
+          console.error('❌ Navigation error:', err);
+          toast('Gagal navigasi', 'err');
+        }
+      },
+      
+      back() { 
+        sessionStorage.removeItem('currentMachineId'); 
+        location.href = 'mcb-control.html'; 
+      },
+      
+      async fs() {
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/status`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' }
+          });
+          const d = await r.json();
+          
+          if (d.success && d.data) {
+            const data = d.data;
+            
+            // Helper: animate numeric value
+            const animateVal = (id, val, unit, decimals = 2) => {
+              const el = document.getElementById(id);
+              if (!el || val === undefined || val === null) return;
+              const target = parseFloat(val);
+              if (isNaN(target)) return;
+              const start = parseFloat(el.dataset.lastVal) || 0;
+              const duration = 400;
+              const startTime = performance.now();
+              
+              const step = (now) => {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = start + (target - start) * eased;
+                el.textContent = current.toFixed(decimals) + (unit ? ' ' + unit : '');
+                el.dataset.lastVal = target;
+                if (progress < 1) requestAnimationFrame(step);
+              };
+              requestAnimationFrame(step);
+            };
+            
+            // Update all monitoring values
+            animateVal('vVolt', data.voltage, 'V', 1);
+            animateVal('vCurr', data.current, 'A', 3);
+            animateVal('vPow', data.power, 'W', 0);
+            animateVal('vApparent', data.apparent_power, 'VA', 0);
+            animateVal('vPf', data.pf, '', 2);
+            animateVal('vEnergy', data.energy_kwh, 'kWh', 4);
+            animateVal('vPeak', data.peak_power, 'W', 0);
+            
+                        // Carbon calculation
+            const carbonFactor = data.carbon_factor || 0.85;
+            const carbon = data.energy_kwh != null ? (data.energy_kwh * carbonFactor) : 0;
+            animateVal('vCarbon', carbon, 'kg', 2);
+            
+            // Update Relay Status dengan visual effect
+            const relayEl = document.getElementById('vRelay');
+            const cardRelay = document.getElementById('cardRelay');
+            
+            if (relayEl && data.relay !== undefined) {
+              const newStatus = data.relay ? 'ON' : 'OFF';
+              const oldStatus = relayEl.textContent;
+              
+              // Update text
+              relayEl.textContent = newStatus;
+              
+              // Update color & glow
+              if (data.relay) {
+                relayEl.style.color = 'var(--success)';
+                relayEl.style.textShadow = '0 0 15px var(--success-glow)';
+                if (cardRelay) {
+                  cardRelay.style.borderColor = 'var(--success)';
+                  cardRelay.setAttribute('status', 'on');
+                }
+              } else {
+                relayEl.style.color = 'var(--error)';
+                relayEl.style.textShadow = '0 0 15px var(--error-glow)';
+                if (cardRelay) {
+                  cardRelay.style.borderColor = 'var(--error)';
+                  cardRelay.setAttribute('status', 'off');
+                }
+              }
+              
+              // Pulse animation on change
+              if (newStatus !== oldStatus && oldStatus !== 'OFF' && oldStatus !== 'ON') {
+                relayEl.style.animation = 'pulse 0.4s ease';
+                setTimeout(() => { relayEl.style.animation = ''; }, 400);
+              }
+            }
+            
+            // Update connection status indicator
+            const statusEl = document.getElementById('vStatus');
+            if (statusEl) {
+              statusEl.textContent = data.online ? '● Online' : '● Offline';
+              statusEl.style.color = data.online ? 'var(--success)' : 'var(--error)';
+            }
+          }
+        } catch (e) { 
+          console.warn('Fetch status error:', e); 
+          const statusEl = document.getElementById('vStatus');
+          if (statusEl) {
+            statusEl.textContent = '⚠️ Connection error';
+            statusEl.style.color = 'var(--warning)';
+          }
+        }
+      },
+      
+      async ctrl(ac) {
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/control`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: ac })
+          });
+          const d = await r.json();
+          toast(d.success ? `${ac === 'on' ? '⚡' : '🔴'} ${ac.toUpperCase()}` : `❌ ${d.message}`, d.success ? 'ok' : 'err');
+          if (d.success) setTimeout(() => this.fs(), 1000);
+        } catch (e) { toast('Error', 'err'); }
+      },
+      
+      async ls() {
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/schedules`, {
+            headers: { 'Authorization': `Bearer ${t}` }
+          });
+          const d = await r.json();
+          const l = document.getElementById('schList');
+          if (!d.success || !d.schedules?.length) {
+            l.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px">Belum ada jadwal</p>';
+            return;
+          }
+          const dy = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+          l.innerHTML = d.schedules.map((s, i) => `
+            <div class="item" style="animation-delay:${i * 0.05}s">
+              <span><strong style="color:var(--text)">${dy[s.schedule_day]}</strong> ${s.schedule_time} 
+                <b style="color:${s.action ? 'var(--success)' : 'var(--error)'};margin-left:8px">${s.action ? '🟢 ON' : '🔴 OFF'}</b></span>
+              <button class="del" onclick="A.ds('${s.id}')" title="Hapus">🗑️</button>
+            </div>`).join('');
+        } catch (e) { console.warn(e); }
+      },
+      
+      async addSch() {
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/schedules`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              schedule_day: parseInt(document.getElementById('schDay').value),
+              schedule_time: document.getElementById('schTime').value,
+              action: document.getElementById('schAct').value === 'true'
+            })
+          });
+          const d = await r.json();
+          toast(d.success ? '✅ Jadwal ditambahkan' : '❌ ' + d.message, d.success ? 'ok' : 'err');
+          if (d.success) this.ls();
+        } catch (e) { toast('Gagal', 'err'); }
+      },
+      
+      async ds(id) {
+        if (!confirm('Hapus jadwal ini?')) return;
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/schedules/${id}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${t}` }
+          });
+          const d = await r.json();
+          if (d.success) { toast('✅ Dihapus', 'ok'); this.ls(); }
+        } catch (e) { console.warn(e); }
+      },
+      
+      async loadCyc() {
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/cycle-timers`, {
+            headers: { 'Authorization': `Bearer ${t}` }
+          });
+          const d = await r.json();
+          const l = document.getElementById('cycList');
+          if (!l) return;
+          if (!d.success) {
+            l.innerHTML = `<p style="color:var(--error);padding:16px;text-align:center">❌ ${d.message || 'Gagal'}</p>`;
+            return;
+          }
+          if (!d.timers?.length) {
+            l.innerHTML = '<p style="color:var(--text-muted);padding:20px;text-align:center">Belum ada cycle timer</p>';
+            return;
+          }
+          const dy = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+          l.innerHTML = d.timers.map((tm, i) => {
+            const ds = tm.schedule_days.map(idx => dy[idx]).join(', ');
+            return `<div class="item" style="animation-delay:${i * 0.05}s"><div>
+              <div style="font-weight:600;margin-bottom:4px;color:var(--text)">${ds}</div>
+              <div style="font-size:12px;color:var(--text-muted)">🟢 ${tm.on_time} → 🔴 ${tm.off_time}</div></div>
+              <button class="del" onclick="A.delCyc('${tm.id}')" title="Nonaktifkan">🗑️</button></div>`;
+          }).join('');
+        } catch (e) {
+          console.warn('Load cycle error:', e);
+          document.getElementById('cycList').innerHTML = '<p style="color:var(--error);padding:16px;text-align:center">⚠️ Gagal load</p>';
+        }
+      },
+      
+      async addCyc() {
+        const days = Array.from(document.querySelectorAll('.cycDay:checked')).map(cb => parseInt(cb.value));
+        if (days.length === 0) { toast('❌ Pilih minimal satu hari', 'err'); return; }
+        const on = document.getElementById('cycOn').value, off = document.getElementById('cycOff').value;
+        if (!on || !off) { toast('❌ Waktu ON dan OFF wajib', 'err'); return; }
+        if (on === off) { toast('❌ Waktu ON dan OFF tidak boleh sama', 'err'); return; }
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/cycle-timers`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ schedule_days: days, on_time: on + ':00', off_time: off + ':00' })
+          });
+          const d = await r.json();
+          if (d.success) {
+            toast('✅ Cycle timer ditambahkan', 'ok');
+            this.loadCyc();
+            document.querySelectorAll('.cycDay').forEach(cb => cb.checked = false);
+            document.getElementById('cycOn').value = '08:00';
+            document.getElementById('cycOff').value = '17:00';
+          } else { toast('❌ ' + d.message, 'err'); }
+        } catch (e) { toast('❌ Gagal terhubung', 'err'); }
+      },
+      
+      async delCyc(tid) {
+        if (!confirm('Nonaktifkan cycle timer ini?')) return;
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/cycle-timers/${tid}`, {
+            method: 'DELETE', headers: { 'Authorization': `Bearer ${t}` }
+          });
+          const d = await r.json();
+          if (d.success) { toast('✅ Dinonaktifkan', 'ok'); this.loadCyc(); }
+          else { toast('❌ ' + d.message, 'err'); }
+        } catch (e) { console.warn('Del cycle error:', e); toast('❌ Gagal', 'err'); }
+      },
+      
+    async lh() {
+      try {
+        const t = localStorage.getItem('authToken');
+        const hStart = document.getElementById('hStart').value;
+        const hEnd = document.getElementById('hEnd').value;
+        
+        // ✅ FIX: Validasi input tanggal
+        if (!hStart || !hEnd) { 
+          toast('❌ Pilih tanggal mulai dan akhir', 'err'); 
+          return; 
+        }
+        
+        // ✅ FIX: Convert ke UTC midnight untuk start, UTC end of day untuk end
+        const startDate = new Date(hStart);
+        startDate.setUTCHours(0, 0, 0, 0);
+        const start = startDate.toISOString();  // "2026-05-21T00:00:00.000Z"
+        
+        const endDate = new Date(hEnd);
+        endDate.setUTCHours(23, 59, 59, 999);
+        const end = endDate.toISOString();  // "2026-05-21T23:59:59.999Z"
+        
+        const tb = document.getElementById('hBody');
+        const empty = document.getElementById('hEmpty');
+        
+        // Show loading
+        tb.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-muted)">Memuat data...</td></tr>';
+        empty.style.display = 'none';
+        
+        // Debug log
+        console.log(`🔍 Fetching readings: start=${start}, end=${end}`);
+        
+        const url = `${API}/mcb-machines/${this.id}/readings?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+        const r = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${t}` }
+        });
+        
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+        }
+        
+        const d = await r.json();
+        console.log('📦 Readings response:', d);  // Debug log
+        
+        if (!d.success || !d.readings?.length) {
+          tb.innerHTML = ''; 
+          empty.style.display = 'block'; 
+          empty.querySelector('p').textContent = `Tidak ada data untuk ${hStart} s/d ${hEnd}`;
+          return;
+        }
+        
+        empty.style.display = 'none';
+        
+        // Render rows dengan staggered animation
+        tb.innerHTML = d.readings.map((row, i) => {
+          const carbonFactor = row.carbon_factor || 0.85;
+          const carbon = row.energy_kwh != null ? (row.energy_kwh * carbonFactor) : 0;
+          
+          return `<tr style="animation:slideIn 0.3s ease ${i * 0.03}s forwards;opacity:0">
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-dim)">
+              ${new Date(row.timestamp).toLocaleString('id-ID', {
+                day:'2-digit', month:'2-digit', year:'numeric',
+                hour:'2-digit', minute:'2-digit'
+              })}
+            </td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-weight:500">${row.voltage?.toFixed(1) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px   solid var(--border);font-weight:500">${row.current?.toFixed(3) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-weight:500;color:var(--success)">${row.power?.toFixed(0) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-dim)">${row.apparent_power?.toFixed(0) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-size:13px">${row.pf?.toFixed(2) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-weight:500;color:var(--primary)">${row.energy_kwh?.toFixed(3) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--warning)">${row.peak_power?.toFixed(0) ?? '-'}</td>
+            <td style="padding:12px;border-bottom:1px solid var(--border);font-size:13px;color:var(--success)">${carbon.toFixed(2)}</td>
+          </tr>`;
+        }).join('');
+        
+      } catch (e) {
+        console.error('❌ Load history error:', e);
+        document.getElementById('hBody').innerHTML = `<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--error)">⚠️ Error: ${e.message}</td></tr>`;
+      }
+    },
+      
+      async saveSet() {
+        try {
+          const t = localStorage.getItem('authToken');
+          const r = await fetch(`${API}/mcb-machines/${this.id}/limits`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              max_current: parseFloat(document.getElementById('setI').value),
+              max_voltage: parseFloat(document.getElementById('setV').value),
+              max_power: parseFloat(document.getElementById('setP').value)
+            })
+          });
+          const d = await r.json();
+          toast(d.success ? '✅ Limits diperbarui' : '❌ ' + d.message, d.success ? 'ok' : 'err');
+        } catch (e) { toast('Gagal', 'err'); }
+      },
+      
+      lg() { toast('⚠️ Butuh data historis', 'info'); },
+      loadHist() { this.lh(); }
+    };
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      // Stagger nav items animation
+      document.querySelectorAll('.nav').forEach((el, i) => {
+        el.style.animation = `fadeInUp 0.4s ease ${i * 0.05 + 0.2}s forwards`;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(10px)';
+      });
+      A.init();
+    });
+    
+    // Auto-refresh status every 5 seconds
+    setInterval(() => { if (A.id) A.fs(); }, 5000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Engineering Report • Nexora Tech</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  
+  <style>
+    /* ========================================
+       🎨 CSS VARIABLES - DASHBOARD THEME
+       ======================================== */
+    :root {
+      --bg-main: #0F172A; --bg-card: #111827; --bg-soft: #1E293B; --bg-elevated: #334155;
+      --primary: #3B82F6; --primary-soft: #60A5FA; --primary-glow: rgba(59, 130, 246, 0.15);
+      --text-main: #F8FAFC; --text-soft: #CBD5E1; --text-muted: #94A3B8; --text-disabled: #64748B;
+      --success: #10B981; --success-soft: rgba(16, 185, 129, 0.15);
+      --warning: #F59E0B; --warning-soft: rgba(245, 158, 11, 0.15);
+      --danger: #EF4444; --danger-soft: rgba(239, 68, 68, 0.15);
+      --border: rgba(255, 255, 255, 0.08); --border-hover: rgba(255, 255, 255, 0.15);
+      --glass: rgba(17, 24, 39, 0.7); --glass-border: rgba(255, 255, 255, 0.1);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3); --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5); --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+      --spacing-xs: 4px; --spacing-sm: 8px; --spacing-md: 16px; --spacing-lg: 24px; --spacing-xl: 32px;
+      --font-base: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+      --text-xs: 0.75rem; --text-sm: 0.875rem; --text-base: 1rem; --text-lg: 1.125rem; --text-xl: 1.25rem; --text-2xl: 1.5rem;
+      --transition-fast: 150ms ease; --transition-normal: 250ms ease;
+      --z-dropdown: 100; --z-sticky: 200; --z-modal: 300; --z-overlay: 400;
+    }
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-base); background: var(--bg-main); color: var(--text-main);
+      font-size: var(--text-sm); line-height: 1.5; min-height: 100vh; overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-card); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* ===== LAYOUT ===== */
+    .app-wrapper { display: grid; grid-template-areas: "topbar" "main"; grid-template-rows: auto 1fr; min-height: 100vh; }
+    @media (min-width: 1024px) {
+      .app-wrapper { grid-template-areas: "topbar topbar" "sidebar main"; grid-template-columns: 240px 1fr; }
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      grid-area: topbar; position: sticky; top: 0; z-index: var(--z-sticky);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacing-sm) var(--spacing-md); background: var(--glass);
+      backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); gap: var(--spacing-md);
+    }
+    .brand { display: flex; align-items: center; gap: var(--spacing-sm); flex-shrink: 0; }
+    .brand-logo {
+      width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--primary-soft));
+      border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: white; box-shadow: var(--shadow-glow);
+    }
+    .brand-text h1 { font-size: var(--text-lg); font-weight: 600; }
+    .brand-text span { font-size: var(--text-xs); color: var(--text-muted); display: block; margin-top: -2px; }
+    .topbar-controls { display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; margin-left: auto; }
+    .control-group {
+      display: flex; align-items: center; gap: var(--spacing-xs); background: var(--bg-card);
+      padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--radius-md);
+      border: 1px solid var(--border); transition: border-color var(--transition-fast);
+    }
+    .control-group:hover { border-color: var(--border-hover); }
+    .control-group label { font-size: var(--text-xs); color: var(--text-soft); white-space: nowrap; }
+    .control-group input, .control-group select {
+      background: transparent; border: none; color: var(--text-main); font-size: var(--text-sm);
+      font-family: inherit; padding: 4px 8px; border-radius: var(--radius-sm); min-width: 100px; cursor: pointer;
+    }
+    .control-group input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+    .control-group select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 8px center; background-repeat: no-repeat; background-size: 16px; padding-right: 28px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+      background: var(--primary); color: white; border: none; border-radius: var(--radius-md);
+      font-size: var(--text-sm); font-weight: 500; cursor: pointer;
+      transition: all var(--transition-fast); white-space: nowrap;
+    }
+    .btn:hover { background: var(--primary-soft); transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+    .btn:active { transform: translateY(0); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-soft); }
+    .btn-outline:hover { background: var(--bg-soft); border-color: var(--primary); color: var(--primary); }
+    .btn-success { background: var(--success); } .btn-success:hover { background: #22c55e; }
+    .btn-warning { background: var(--warning); color: #111; } .btn-warning:hover { background: #fbbf24; }
+    .btn-danger { background: var(--danger); } .btn-danger:hover { background: #f87171; }
+    .btn-primary { background: var(--primary); } .btn-primary:hover { background: var(--primary-soft); }
+    .menu-toggle {
+      display: none; background: transparent; border: none; color: var(--text-main);
+      font-size: var(--text-xl); cursor: pointer; padding: var(--spacing-sm); border-radius: var(--radius-sm);
+    }
+    .menu-toggle:hover { background: var(--bg-soft); }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      grid-area: sidebar; position: sticky; top: 64px; height: calc(100vh - 64px);
+      background: var(--bg-card); border-right: 1px solid var(--border);
+      padding: var(--spacing-md); overflow-y: auto; transition: transform var(--transition-normal);
+      z-index: var(--z-sticky);
+    }
+    @media (max-width: 1023px) {
+      .sidebar {
+        position: fixed; left: 0; top: 64px; transform: translateX(-100%);
+        width: 280px; box-shadow: var(--shadow-lg);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .menu-toggle { display: flex; }
+    }
+    .nav-section { margin-bottom: var(--spacing-lg); }
+    .nav-title {
+      font-size: var(--text-xs); font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-muted);
+      padding: var(--spacing-xs) var(--spacing-sm); margin-bottom: var(--spacing-sm);
+    }
+    .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-md);
+      color: var(--text-soft); text-decoration: none; font-size: var(--text-sm);
+      transition: all var(--transition-fast); cursor: pointer;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: var(--primary-glow); color: var(--primary);
+      border-left: 3px solid var(--primary); padding-left: calc(var(--spacing-md) - 3px);
+    }
+    .nav-item i { width: 20px; text-align: center; font-size: var(--text-base); }
+    .nav-badge {
+      margin-left: auto; background: var(--danger); color: white;
+      font-size: var(--text-xs); padding: 2px 8px; border-radius: 20px; font-weight: 500;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content {
+      grid-area: main; padding: var(--spacing-lg);
+      display: flex; flex-direction: column; gap: var(--spacing-lg); overflow-x: hidden;
+    }
+    @media (max-width: 768px) { .main-content { padding: var(--spacing-md); } }
+    .page-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: var(--spacing-md);
+      padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--border);
+    }
+    .page-title h2 { font-size: var(--text-2xl); font-weight: 600; margin-bottom: var(--spacing-xs); }
+    .page-title p { color: var(--text-muted); font-size: var(--text-sm); }
+    .page-meta { display: flex; gap: var(--spacing-lg); flex-wrap: wrap; }
+    .meta-item { display: flex; flex-direction: column; }
+    .meta-item strong { color: var(--text-soft); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-item span { font-size: var(--text-base); font-weight: 500; color: var(--text-main); }
+
+    .view-section { display: none; animation: fadeIn var(--transition-normal); }
+    .view-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== CARDS & TABLES ===== */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); }
+    .summary-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: var(--spacing-md); display: flex; flex-direction: column; gap: var(--spacing-sm);
+      transition: all var(--transition-fast); position: relative; overflow: hidden;
+    }
+    .summary-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-soft));
+      opacity: 0; transition: opacity var(--transition-fast);
+    }
+    .summary-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .summary-card:hover::before { opacity: 1; }
+    .summary-card.success::before { background: linear-gradient(90deg, var(--success), #34d399); }
+    .summary-card.warning::before { background: linear-gradient(90deg, var(--warning), #fcd34d); }
+    .summary-card.danger::before { background: linear-gradient(90deg, var(--danger), #f87171); }
+    .card-icon {
+      width: 40px; height: 40px; background: var(--bg-soft); border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center; font-size: var(--text-lg); color: var(--primary);
+    }
+    .card-value { font-size: var(--text-2xl); font-weight: 700; font-family: var(--font-mono); letter-spacing: -0.02em; }
+    .card-label { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .card-trend { display: flex; align-items: center; gap: 4px; font-size: var(--text-xs); font-weight: 500; }
+    .card-trend.up { color: var(--success); } .card-trend.down { color: var(--danger); } .card-trend.neutral { color: var(--text-muted); }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-md); }
+    .metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .metric-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--spacing-md); border-bottom: 1px solid var(--border); background: var(--bg-soft);
+    }
+    .metric-title { font-size: var(--text-base); font-weight: 600; display: flex; align-items: center; gap: var(--spacing-sm); }
+    .metric-title i { color: var(--primary); }
+    .metric-actions { display: flex; gap: var(--spacing-xs); }
+    .metric-actions button {
+      background: transparent; border: none; color: var(--text-muted); cursor: pointer;
+      padding: 4px; border-radius: var(--radius-sm); transition: all var(--transition-fast);
+    }
+    .metric-actions button:hover { color: var(--text-main); background: var(--bg-elevated); }
+    .metric-body { padding: var(--spacing-md); }
+    .metric-row { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px dashed var(--border); }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-label { color: var(--text-soft); font-size: var(--text-sm); }
+    .metric-value { font-family: var(--font-mono); font-weight: 500; display: flex; align-items: center; gap: var(--spacing-sm); }
+    .status-badge {
+      padding: 4px 10px; border-radius: 20px; font-size: var(--text-xs);
+      font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .status-badge.ok { background: var(--success-soft); color: var(--success); }
+    .status-badge.warn { background: var(--warning-soft); color: var(--warning); }
+    .status-badge.crit { background: var(--danger-soft); color: var(--danger); }
+    .status-badge.na { background: var(--bg-elevated); color: var(--text-muted); }
+
+    .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .table-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--spacing-md); border-bottom: 1px solid var(--border);
+      background: var(--bg-soft); flex-wrap: wrap; gap: var(--spacing-sm);
+    }
+    .table-title { font-size: var(--text-base); font-weight: 600; display: flex; align-items: center; gap: var(--spacing-sm); }
+    .table-search {
+      display: flex; align-items: center; gap: var(--spacing-xs); background: var(--bg-main);
+      padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border);
+    }
+    .table-search input {
+      background: transparent; border: none; color: var(--text-main);
+      font-size: var(--text-sm); width: 150px; outline: none;
+    }
+    .table-search input::placeholder { color: var(--text-muted); }
+    .table-wrapper { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    thead { position: sticky; top: 0; background: var(--bg-soft); z-index: 10; }
+    th {
+      padding: var(--spacing-md); text-align: left; font-weight: 600; color: var(--text-soft);
+      text-transform: uppercase; font-size: var(--text-xs); letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer;
+      user-select: none; transition: color var(--transition-fast);
+    }
+    th:hover { color: var(--primary); }
+    th i { margin-left: 4px; font-size: 10px; opacity: 0.5; }
+    td { padding: var(--spacing-md); border-bottom: 1px solid var(--border); color: var(--text-main); vertical-align: middle; }
+    tbody tr { transition: background var(--transition-fast); }
+    tbody tr:hover { background: var(--primary-glow); }
+    tbody tr:last-child td { border-bottom: none; }
+    .table-num { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+    .table-center { text-align: center; }
+    .machine-name { display: flex; flex-direction: column; gap: 2px; }
+    .machine-name strong { font-weight: 500; }
+    .machine-name span { font-size: var(--text-xs); color: var(--text-muted); font-family: var(--font-mono); }
+
+    /* ===== ALERTS & UTILS ===== */
+    .alert-panel {
+      background: var(--bg-card); border-left: 4px solid var(--border);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: var(--spacing-md); margin-bottom: var(--spacing-md);
+      display: flex; gap: var(--spacing-md); align-items: flex-start;
+    }
+    .alert-panel.critical { border-left-color: var(--danger); background: var(--danger-soft); }
+    .alert-panel.warning { border-left-color: var(--warning); background: var(--warning-soft); }
+    .alert-panel.info { border-left-color: var(--primary); background: var(--primary-glow); }
+    .alert-icon { font-size: var(--text-xl); flex-shrink: 0; }
+    .alert-panel.critical .alert-icon { color: var(--danger); }
+    .alert-panel.warning .alert-icon { color: var(--warning); }
+    .alert-panel.info .alert-icon { color: var(--primary); }
+    .alert-content h4 { font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--spacing-xs); }
+    .alert-content p { font-size: var(--text-sm); color: var(--text-soft); line-height: 1.4; }
+    .alert-time { font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--spacing-xs); font-family: var(--font-mono); }
+
+    .loading-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.9); display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      z-index: var(--z-modal); backdrop-filter: blur(4px);
+    }
+    .loading-spinner {
+      width: 48px; height: 48px; border: 3px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: var(--spacing-md);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--text-soft); font-size: var(--text-sm); }
+    .empty-state { text-align: center; padding: var(--spacing-xl) var(--spacing-lg); color: var(--text-muted); }
+    .empty-state i { font-size: 3rem; margin-bottom: var(--spacing-md); opacity: 0.3; }
+    .empty-state h3 { font-size: var(--text-lg); font-weight: 500; margin-bottom: var(--spacing-sm); color: var(--text-soft); }
+    .empty-state p { font-size: var(--text-sm); max-width: 400px; margin: 0 auto; }
+
+    .progress-bar { height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; margin-top: var(--spacing-xs); }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width var(--transition-normal); }
+    .progress-fill.ok { background: linear-gradient(90deg, var(--success), #34d399); }
+    .progress-fill.warn { background: linear-gradient(90deg, var(--warning), #fcd34d); }
+    .progress-fill.crit { background: linear-gradient(90deg, var(--danger), #f87171); }
+
+    /* ===== SETTINGS & HELP ===== */
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-md); }
+    .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--spacing-md); }
+    .settings-card h4 { font-size: var(--text-base); font-weight: 600; margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 1px solid var(--border); }
+    .settings-row { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-sm) 0; border-bottom: 1px dashed var(--border); }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-label { color: var(--text-soft); }
+    .settings-control { display: flex; align-items: center; gap: var(--spacing-sm); }
+    .settings-control input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+    .settings-control select, .settings-control input[type="text"] {
+      background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);
+      padding: 6px 10px; border-radius: var(--radius-sm); font-size: var(--text-sm);
+    }
+    .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-md); }
+    .help-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: var(--spacing-md); cursor: pointer; transition: all var(--transition-fast);
+    }
+    .help-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .help-card h4 { font-size: var(--text-base); font-weight: 600; margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-sm); }
+    .help-card h4 i { color: var(--primary); }
+    .help-card p { font-size: var(--text-sm); color: var(--text-soft); line-height: 1.5; }
+
+    .reports-list { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+    .report-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacing-md); background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+    .report-item:hover { border-color: var(--border-hover); }
+    .report-info { display: flex; align-items: center; gap: var(--spacing-md); }
+    .report-icon {
+      width: 40px; height: 40px; background: var(--bg-soft); border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center; color: var(--primary);
+    }
+    .report-details h4 { font-size: var(--text-sm); font-weight: 500; }
+    .report-details span { font-size: var(--text-xs); color: var(--text-muted); }
+    .report-actions { display: flex; gap: var(--spacing-xs); }
+    .report-actions button {
+      background: transparent; border: none; color: var(--text-muted);
+      cursor: pointer; padding: 6px; border-radius: var(--radius-sm); transition: color var(--transition-fast);
+    }
+    .report-actions button:hover { color: var(--primary); }
+
+    /* ========================================
+       🖨️ A4 PAPER TEMPLATE
+       ======================================== */
+    .a4-paper {
+      width: 210mm; min-height: 297mm; background: #fff;
+      padding: 8mm 10mm; box-shadow: var(--shadow-md);
+      font-size: 7.5pt; line-height: 1.25; position: relative;
+      display: none; margin: 0 auto; border-radius: 2px; color: #111;
+    }
+    .a4-paper.active { display: block; }
+    
+    @media (max-width: 768px) {
+      .a4-paper { width: 100%; min-height: auto; padding: 15px; box-shadow: var(--shadow-sm); transform: scale(0.85); transform-origin: top center; }
+    }
+    @media (max-width: 480px) { .a4-paper { transform: scale(0.7); padding: 12px 8px; } }
+    
+    .header { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 5px; border-bottom: 3px solid #000; margin-bottom: 6px; gap: 8px; flex-wrap: wrap; }
+    .header-left { flex: 1.2; font-size: 6.5pt; color: #333; line-height: 1.35; min-width: 200px; }
+    .header-left .company { font-weight: 800; font-size: 9pt; color: #000; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .header-center { flex: 1; text-align: center; min-width: 180px; }
+    .header-center h1 { font-size: 10.5pt; font-weight: 800; color: #000; margin: 0; text-transform: uppercase; }
+    .header-center .doc-code { font-size: 6pt; color: #666; margin-top: 1px; font-family: monospace; }
+    .header-right { flex: 0.8; text-align: right; min-width: 120px; }
+    @media (max-width: 600px) {
+      .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .header-left, .header-center, .header-right { flex: none; width: 100%; text-align: left; }
+      .header-center { text-align: center; }
+      .header-right { text-align: right; }
+    }
+    
+    .info-bar { border-top: 2px solid #000; border-bottom: 1px solid #ddd; padding: 3px 0 4px; margin-bottom: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; font-size: 6.5pt; color: #333; }
+    .info-bar strong { color: #000; font-weight: 700; font-size: 7pt; }
+    .info-bar .highlight { color: #c00; font-weight: 700; }
+    @media (max-width: 768px) { .info-bar { grid-template-columns: repeat(3, 1fr); gap: 6px; } }
+    @media (max-width: 480px) { .info-bar { grid-template-columns: 1fr 1fr; } }
+    
+    .section { margin: 7px 0; page-break-inside: avoid; }
+    .section-title { font-size: 8.5pt; font-weight: 800; color: #000; padding: 3px 4px; margin-bottom: 5px; border-bottom: 2px solid #000; display: flex; align-items: center; gap: 4px; background: #f5f5f5; flex-wrap: wrap; }
+    .section-title .num { background: #000; color: #fff; padding: 1px 6px; border-radius: 2px; font-size: 6.5pt; font-weight: 700; }
+    .section-title .badge { margin-left: auto; font-size: 6pt; padding: 1px 5px; background: #2cb67d; color: #fff; border-radius: 2px; font-weight: 600; }
+    .section-title .badge.warning { background: #ffb800; color: #000; }
+    .section-title .badge.critical { background: #c00; }
+    
+    .spec-table, .main-table, .threshold-table, .quality-table, .reliability-table {
+      width: 100%; border-collapse: collapse; font-size: 7pt; margin: 4px 0 8px 0; border: 1.5px solid #000; table-layout: fixed;
+    }
+    .spec-table thead, .main-table thead, .threshold-table thead, .quality-table thead, .reliability-table thead { background: #000; color: #fff; }
+    .spec-table th, .main-table th, .threshold-table th, .quality-table th, .reliability-table th {
+      padding: 4px 3px; text-align: left; font-weight: 700; border-right: 1px solid #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .spec-table th:last-child, .main-table th:last-child, .threshold-table th:last-child, .quality-table th:last-child, .reliability-table th:last-child { border-right: none; }
+    .spec-table td, .main-table td, .threshold-table td, .quality-table td, .reliability-table td {
+      padding: 3px 3px; border-bottom: 1px solid #e0e0e0; border-right: 1px solid #f0f0f0; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .spec-table td:last-child, .main-table td:last-child, .threshold-table td:last-child, .quality-table td:last-child, .reliability-table td:last-child { border-right: none; }
+    .spec-table tr:nth-child(even), .main-table tr:nth-child(even), .threshold-table tr:nth-child(even), .quality-table tr:nth-child(even), .reliability-table tr:nth-child(even) { background: #fafafa; }
+    
+    .spec-table .label { font-weight: 700; color: #000; width: 42%; background: #f0f0f0; }
+    .spec-table .value { color: #111; font-family: 'Consolas', monospace; }
+    .spec-table .unit { color: #666; font-size: 6.5pt; }
+    
+    .main-table th:nth-child(1), .main-table td:nth-child(1) { width: 18%; }
+    .main-table th:nth-child(2), .main-table td:nth-child(2) { width: 10%; text-align: center; }
+    .main-table th:nth-child(3), .main-table td:nth-child(3) { width: 9%; }
+    .main-table th:nth-child(4), .main-table td:nth-child(4) { width: 9%; }
+    .main-table th:nth-child(5), .main-table td:nth-child(5) { width: 9%; }
+    .main-table th:nth-child(6), .main-table td:nth-child(6) { width: 9%; }
+    .main-table th:nth-child(7), .main-table td:nth-child(7) { width: 9%; }
+    .main-table th:nth-child(8), .main-table td:nth-child(8) { width: 9%; }
+    .main-table th:nth-child(9), .main-table td:nth-child(9) { width: 8%; text-align: center; }
+    
+    .num { text-align: right; font-family: 'Consolas', 'Courier New', monospace; font-variant-numeric: tabular-nums; }
+    .center { text-align: center; }
+    
+    .status-ok { color: #2cb67d; font-weight: 700; }
+    .status-warn { color: #ffb800; font-weight: 700; }
+    .status-crit { color: #c00; font-weight: 700; }
+    .status-na { color: #777; }
+    
+    .threshold-bar { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; display: inline-block; width: 60px; vertical-align: middle; margin: 0 4px; }
+    .threshold-fill { height: 100%; background: linear-gradient(90deg, #2cb67d 0%, #ffb800 70%, #c00 100%); transition: width 0.3s; }
+    
+    .quality-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 4px 0; }
+    .quality-card { border: 1px solid #ddd; padding: 4px; background: #fcfcfc; border-radius: 3px; }
+    .quality-card .label { font-weight: 700; font-size: 6.5pt; color: #333; }
+    .quality-card .value { font-size: 8pt; font-weight: 700; color: #000; font-family: monospace; }
+    .quality-card .unit { font-size: 6pt; color: #777; }
+    @media (max-width: 768px) { .quality-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .quality-grid { grid-template-columns: 1fr; } }
+    
+    .reliability-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .reliability-item { text-align: center; padding: 4px; border-left: 3px solid #000; background: #f9f9f9; border-radius: 0 3px 3px 0; }
+    .reliability-item .val { font-size: 9pt; font-weight: 800; color: #0974ff; font-family: monospace; }
+    .reliability-item .lbl { font-size: 6pt; color: #fffdfd; text-transform: uppercase; letter-spacing: 0.3px; }
+    @media (max-width: 768px) { .reliability-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .reliability-grid { grid-template-columns: 1fr; } }
+    
+    .alert-panel-old { border: 1px solid #c00; background: #fff5f5; padding: 4px 6px; margin: 4px 0; font-size: 7pt; border-left-width: 3px; border-radius: 0 3px 3px 0; }
+    .alert-panel-old.warning { border-color: #ffb800; background: #fffbe6; }
+    .alert-panel-old .alert-title { font-weight: 700; color: #c00; margin-bottom: 2px; }
+    .alert-panel-old.warning .alert-title { color: #b88600; }
+    
+    .page-footer-old { position: absolute; bottom: 6mm; left: 10mm; right: 10mm; display: flex; justify-content: space-between; font-size: 6pt; color: #777; border-top: 1px solid #ddd; padding-top: 2px; }
+    .page-footer-old .stamp { font-weight: 700; color: #000; }
+    
+    .loading-old { text-align: center; padding: 35px 20px; color: #666; font-size: 8.5pt; }
+    .loading-old .spinner { width: 24px; height: 24px; border: 2.5px solid rgba(108,99,255,0.3); border-top-color: #6c63ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+    .empty-state-old { text-align: center; padding: 25px 15px; color: #888; font-size: 8pt; }
+    
+    .eng-note { font-size: 6pt; color: #666; padding: 4px 6px; background: #f8f8f8; border-left: 2px solid #6c63ff; margin-top: 4px; border-radius: 0 2px 2px 0; }
+    
+    /* ===== OFFICIAL SIGNATURE BLOCK ===== */
+    .sig-official {
+      margin-top: 8mm;
+      padding-top: 4mm;
+      border-top: 1.5px solid #000;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .sig-date { 
+      text-align: right; 
+      margin-bottom: 5mm; 
+      font-weight: 600; 
+      font-size: 7.5pt; 
+    }
+    .sig-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15mm;
+      text-align: center;
+    }
+    .sig-col { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+    }
+    .sig-title { 
+      font-weight: 800; 
+      font-size: 7.5pt; 
+      margin-bottom: 1mm; 
+      text-transform: uppercase; 
+    }
+    .sig-role { 
+      font-style: italic; 
+      font-size: 7pt; 
+      margin-bottom: 5mm; 
+      color: #333; 
+    }
+    .sig-line { 
+      width: 80%; 
+      border-bottom: 1px solid #000; 
+      height: 10mm; 
+      margin-bottom: 2mm; 
+    }
+    .sig-name { 
+      font-weight: 700; 
+      font-size: 7.5pt; 
+      margin-bottom: 1mm; 
+    }
+    .sig-nip { 
+      font-size: 7pt; 
+      color: #444; 
+    }
+    .sig-edit {
+      background: transparent; border: none; border-bottom: 1px dashed #bbb;
+      text-align: center; font-family: inherit; font-size: inherit; color: inherit;
+      padding: 0 2px; width: 90%; transition: border 0.2s;
+    }
+    .sig-edit:focus { outline: none; border-bottom-color: #000; background: rgba(0,0,0,0.02); }
+    .sig-edit::placeholder { color: #aaa; font-style: italic; }
+
+    @media print {
+      .sig-edit { border: none !important; background: transparent !important; }
+      .sig-official { page-break-before: avoid !important; }
+    }
+
+    /* ========================================
+       🖨️ PRINT STYLES
+       ======================================== */
+    @media print {
+      @page { size: A4; margin: 0; }
+      body {
+        background: #fff !important; padding: 0 !important; margin: 0 !important;
+        width: 210mm !important; display: block !important; color: #000 !important;
+        -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+      }
+      .topbar, .sidebar, .nav-bar, .no-print, .app-wrapper, .main-content, 
+      .view-section, .loading-overlay, #menuToggle, #pageNav { 
+        display: none !important; visibility: hidden !important; 
+      }
+      .a4-paper {
+        display: block !important; visibility: visible !important;
+        width: 210mm !important; min-height: 297mm !important; height: auto !important;
+        margin: 0 !important; padding: 8mm 10mm !important;
+        box-shadow: none !important; border: none !important;
+        background: #fff !important; color: #111 !important;
+        page-break-after: always !important; position: relative !important;
+        transform: none !important; float: none !important;
+      }
+      .a4-paper:last-child { page-break-after: auto !important; }
+      .section { page-break-inside: avoid; break-inside: avoid; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; }
+      .signature-block {
+        page-break-before: avoid !important; page-break-after: avoid !important;
+        margin-top: 15mm !important; padding-top: 8mm !important; border-top: 1.5px solid #000 !important;
+      }
+      .status-ok, .status-warn, .status-crit, .threshold-fill, .badge {
+        -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+      }
+      body, table, td, th { font-family: 'Inter', Arial, sans-serif !important; text-rendering: optimizeLegibility !important; }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1023px) {
+      .topbar-controls { flex-wrap: wrap; justify-content: flex-end; }
+      .control-group { min-width: 140px; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+      .page-meta { width: 100%; justify-content: space-between; }
+    }
+    @media (max-width: 767px) {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .quality-grid, .reliability-grid { grid-template-columns: 1fr; }
+      .page-meta { flex-direction: column; gap: var(--spacing-sm); }
+      .table-search input { width: 120px; }
+    }
+    @media (max-width: 479px) {
+      .topbar { padding: var(--spacing-sm); }
+      .brand-text h1 { font-size: var(--text-base); }
+      .brand-text span { display: none; }
+      .topbar-controls { width: 100%; justify-content: center; }
+      .control-group { flex: 1; justify-content: center; min-width: auto; }
+      .control-group label { display: none; }
+      .control-group input, .control-group select { min-width: auto; text-align: center; padding: 4px; }
+      .btn { padding: 6px 12px; font-size: var(--text-xs); }
+      .summary-grid { grid-template-columns: 1fr; }
+      .metrics-grid { grid-template-columns: 1fr; }
+      .page-title h2 { font-size: var(--text-xl); }
+      .card-value { font-size: var(--text-xl); }
+      th, td { padding: var(--spacing-sm); font-size: var(--text-xs); }
+      .table-search { width: 100%; }
+      .table-search input { width: 100%; min-width: auto; }
+    }
+    @media (max-width: 359px) {
+      :root { --text-xs: 0.7rem; --text-sm: 0.8rem; }
+      .main-content { padding: var(--spacing-sm); }
+      .summary-card, .metric-card, .settings-card { padding: var(--spacing-sm); }
+      .card-value { font-size: var(--text-lg); }
+      .metric-value { font-size: var(--text-sm); }
+    }
+
+    .hover-lift { transition: transform var(--transition-fast), box-shadow var(--transition-fast); }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    input:focus, select:focus, button:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); }
+
+    body.compact-mode .summary-card,
+    body.compact-mode .metric-card,
+    body.compact-mode .settings-card { padding: var(--spacing-sm) !important; }
+    body.compact-mode .card-value { font-size: var(--text-xl) !important; }
+    body.compact-mode .metric-row { padding: var(--spacing-xs) 0 !important; }
+    body.compact-mode table th,
+    body.compact-mode table td { padding: var(--spacing-xs) var(--spacing-sm) !important; font-size: var(--text-xs) !important; }
+
+    @media print {
+      body {
+        --bg-main: #fff !important;
+        --bg-card: #fff !important;
+        --text-main: #000 !important;
+      }
+    }
+    
+    .scientific-note {
+      font-size: 10px; color: var(--text-muted); margin-top: 4px;
+      border-left: 2px solid var(--primary); padding-left: 8px;
+      background: rgba(59, 130, 246, 0.05); padding: 6px 10px; border-radius: 0 4px 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Processing engineering data...</div>
+  </div>
+
+  <!-- App Wrapper -->
+  <div class="app-wrapper">
+    <!-- 🔝 Topbar -->
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+      <div class="brand">
+        <div class="brand-logo">NX</div>
+        <div class="brand-text"><h1>Nexora Tech</h1><span>Engineering Intelligence</span></div>
+      </div>
+      <div class="topbar-controls">
+        <div class="control-group">
+          <label><i class="far fa-calendar"></i></label>
+          <input type="date" id="startDate"><span style="color:var(--text-muted)">–</span><input type="date" id="endDate">
+        </div>
+        <div class="control-group">
+          <label><i class="fas fa-layer-group"></i></label>
+          <select id="granularity"><option value="hourly">Hourly</option><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select>
+        </div>
+        <div class="control-group">
+          <label><i class="fas fa-sliders-h"></i></label>
+          <select id="thresholdProfile"><option value="industrial" selected>Industrial</option><option value="commercial">Commercial</option><option value="light">Light Duty</option></select>
+        </div>
+        <button class="btn" onclick="Report.generateReport()"><i class="fas fa-sync-alt"></i> Generate</button>
+        <button class="btn btn-outline" onclick="Report.exportPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+      </div>
+    </header>
+
+    <!-- 📋 Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <nav class="nav-section"><div class="nav-title">Main</div><ul class="nav-list">
+        <li class="nav-item active" data-view="dashboard"><i class="fas fa-home"></i> Dashboard</li>
+        <li class="nav-item" data-view="power-quality"><i class="fas fa-bolt"></i> Power Quality</li>
+        <li class="nav-item" data-view="reliability"><i class="fas fa-shield-alt"></i> Reliability</li>
+        <li class="nav-item" data-view="sustainability"><i class="fas fa-leaf"></i> Sustainability</li>
+      </ul></nav>
+      <nav class="nav-section"><div class="nav-title">System</div><ul class="nav-list">
+        <li class="nav-item" data-view="settings"><i class="fas fa-cog"></i> Settings</li>
+        <li class="nav-item" data-view="help"><i class="fas fa-question-circle"></i> Help</li>
+        <!-- ✅ MENU EDIT DATA TAMBAHAN -->
+        <li class="nav-item" data-view="edit-signature"><i class="fas fa-pen-to-square"></i> Edit Data</li>
+      </ul></nav>
+    </aside>
+
+    <!-- 📊 Main Content -->
+    <main class="main-content">
+      <!-- Dashboard View -->
+      <section id="view-dashboard" class="view-section active">
+        <div class="page-header">
+          <div class="page-title"><h2>Dashboard</h2><p>Real-time monitoring overview • MCB Industrial Systems</p></div>
+          <div class="page-meta">
+            <div class="meta-item"><strong>Period</strong><span id="dashPeriod">–</span></div>
+            <div class="meta-item"><strong>Profile</strong><span id="dashProfile">Industrial</span></div>
+            <div class="meta-item"><strong>Machines</strong><span id="dashMachines">0</span></div>
+          </div>
+        </div>
+        <div class="summary-grid" id="summaryCards"></div>
+        <div class="metrics-grid" id="metricsSection"></div>
+        <div id="alertsContainer"></div>
+      </section>
+
+      <!-- Power Quality View -->
+      <section id="view-power-quality" class="view-section">
+        <div class="page-header"><div class="page-title"><h2>Power Quality Analysis</h2><p>Voltage Deviation, Current Utilization, Reactive Ratio • IEC 60038 Compliance</p></div></div>
+        <div class="table-container">
+          <div class="table-header"><div class="table-title"><i class="fas fa-wave-square"></i> Power Quality Metrics</div>
+            <div class="table-search"><i class="fas fa-search" style="color:var(--text-muted)"></i><input type="text" placeholder="Search machines..." id="pqSearch"></div>
+          </div>
+          <div class="table-wrapper"><table><thead><tr><th>Machine</th><th class="table-center">Volt.Dev<br><small>(%)</small></th><th class="table-center">Curr.Util<br><small>(%)</small></th><th class="table-center">tan φ<br><small>(Q/P)</small></th><th class="table-center">PQI<br><small>Index</small></th><th class="table-center">Events</th><th class="table-center">Status</th></tr></thead><tbody id="pqTableBody"></tbody></table></div>
+        </div>
+        <div class="quality-grid" id="qualityCards" style="margin-top:16px"></div>
+      </section>
+
+      <!-- Reliability View -->
+      <section id="view-reliability" class="view-section">
+        <div class="page-header"><div class="page-title"><h2>Reliability & Maintenance</h2><p>MTBF, Availability, Risk Assessment • MIL-HDBK-217F</p></div></div>
+        <div class="reliability-grid" id="reliabilityGrid"></div>
+      </section>
+
+      <!-- Sustainability View -->
+      <section id="view-sustainability" class="view-section">
+        <div class="page-header"><div class="page-title"><h2>Energy & Sustainability</h2><p>Carbon Footprint, Energy Efficiency, Cost Analysis</p></div></div>
+        <div class="summary-grid">
+          <div class="summary-card"><div class="card-icon"><i class="fas fa-bolt"></i></div><div class="card-value" id="totalEnergy">0</div><div class="card-label">Total Energy (kWh)</div><div class="card-trend neutral"><i class="fas fa-chart-line"></i> Period Total</div></div>
+          <div class="summary-card"><div class="card-icon"><i class="fas fa-leaf"></i></div><div class="card-value" id="totalCarbon">0</div><div class="card-label">CO₂ Emissions (kg)</div><div class="card-trend neutral"><i class="fas fa-calculator"></i> Grid Factor</div></div>
+          <div class="summary-card"><div class="card-icon"><i class="fas fa-coins"></i></div><div class="card-value" id="totalCost">0</div><div class="card-label">Est. Cost (IDR)</div><div class="card-trend neutral"><i class="fas fa-tag"></i> Rate Applied</div></div>
+          <div class="summary-card"><div class="card-icon"><i class="fas fa-percentage"></i></div><div class="card-value" id="avgEfficiency">0</div><div class="card-label">Avg. Efficiency</div><div class="card-trend up"><i class="fas fa-arrow-up"></i> Target: ≥75%</div></div>
+        </div>
+        <div class="table-container" style="margin-top:16px">
+          <div class="table-header"><div class="table-title"><i class="fas fa-table"></i> Energy Breakdown</div></div>
+          <div class="table-wrapper"><table><thead><tr><th>Machine</th><th class="table-num">Energy (kWh)</th><th class="table-num">CO₂ (kg)</th><th class="table-num">Cost (IDR)</th><th class="table-num">Load Factor</th><th class="table-num">Eff. Index</th></tr></thead><tbody id="energyTableBody"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- Settings View -->
+      <section id="view-settings" class="view-section">
+        <div class="page-header"><div class="page-title"><h2>System Settings</h2><p>Configure application preferences</p></div></div>
+        <div class="settings-grid">
+          <div class="settings-card"><h4><i class="fas fa-plug"></i> API Configuration</h4>
+            <div class="settings-row"><span class="settings-label">API Endpoint</span><div class="settings-control"><input type="text" id="apiEndpoint" value="http://127.0.0.1:3001/api/auth" style="width:200px"></div></div>
+            <div class="settings-row"><span class="settings-label">Auth Token</span><div class="settings-control"><input type="password" id="authToken" placeholder="Enter token" style="width:200px"><button class="btn btn-outline" style="padding:4px 8px" onclick="Report.saveSettings()">Save</button></div></div>
+            <div class="settings-row"><span class="settings-label">Connection Test</span><button class="btn btn-outline" style="padding:4px 12px" onclick="Report.testConnection()">Test</button></div>
+          </div>
+          <div class="settings-card"><h4><i class="fas fa-file-alt"></i> Report Preferences</h4>
+            <div class="settings-row"><span class="settings-label">Default Granularity</span><div class="settings-control"><select id="prefGranularity"><option value="hourly">Hourly</option><option value="daily" selected>Daily</option><option value="weekly">Weekly</option></select></div></div>
+            <div class="settings-row"><span class="settings-label">Default Threshold Profile</span><div class="settings-control"><select id="prefProfile"><option value="industrial" selected>Industrial Heavy</option><option value="commercial">Commercial</option><option value="light">Light Duty</option></select></div></div>
+            <div class="settings-row"><span class="settings-label">Auto-generate Reports</span><div class="settings-control"><input type="checkbox" id="autoGenerate" checked></div></div>
+          </div>
+          <div class="settings-card"><h4><i class="fas fa-display"></i> Display Options</h4>
+            <div class="settings-row"><span class="settings-label">Theme</span><div class="settings-control"><select id="prefTheme"><option value="dark" selected>Dark Industrial</option><option value="light">Light</option></select></div></div>
+            <div class="settings-row"><span class="settings-label">Show Animations</span><div class="settings-control"><input type="checkbox" id="prefAnimations" checked></div></div>
+            <div class="settings-row"><span class="settings-label">Compact Tables</span><div class="settings-control"><input type="checkbox" id="prefCompact"></div></div>
+          </div>
+          <div class="settings-card"><h4><i class="fas fa-file-export"></i> Export Settings</h4>
+            <div class="settings-row"><span class="settings-label">PDF Page Size</span><div class="settings-control"><select id="pdfSize"><option value="A4" selected>A4 (210×297mm)</option></select></div></div>
+            <div class="settings-row"><span class="settings-label">Include Charts</span><div class="settings-control"><input type="checkbox" id="includeCharts" checked></div></div>
+          </div>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:8px"><button class="btn btn-success" onclick="Report.saveAllSettings()"><i class="fas fa-save"></i> Save All Settings</button><button class="btn btn-outline" onclick="Report.resetSettings()"><i class="fas fa-undo"></i> Reset to Default</button></div>
+      </section>
+
+      <!-- Help View -->
+      <section id="view-help" class="view-section">
+        <div class="page-header"><div class="page-title"><h2>Help & Documentation</h2><p>Guides, FAQs, and support resources</p></div></div>
+        <div class="help-grid">
+          <div class="help-card" onclick="Report.showHelp('getting-started')"><h4><i class="fas fa-rocket"></i> Getting Started</h4><p>Quick start guide for generating your first engineering report. Learn the basics of data configuration and threshold setup.</p></div>
+          <div class="help-card" onclick="Report.showHelp('thresholds')"><h4><i class="fas fa-sliders-h"></i> Threshold Profiles</h4><p>Understanding Industrial, Commercial, and Light Duty threshold profiles. How to customize limits for your specific equipment.</p></div>
+          <div class="help-card" onclick="Report.showHelp('export')"><h4><i class="fas fa-file-pdf"></i> Export & Print</h4><p>Best practices for exporting reports to PDF. Print optimization tips and A4 layout guidelines for professional documentation.</p></div>
+          <div class="help-card" onclick="Report.showHelp('troubleshooting')"><h4><i class="fas fa-wrench"></i> Troubleshooting</h4><p>Common issues and solutions. API connectivity problems, data gaps, and performance optimization techniques.</p></div>
+          <div class="help-card" onclick="Report.showHelp('api')"><h4><i class="fas fa-code"></i> API Reference</h4><p>Complete API documentation for /mcb-machines and /readings endpoints. Authentication, parameters, and response formats.</p></div>
+          <div class="help-card" onclick="Report.showHelp('standards')"><h4><i class="fas fa-certificate"></i> Compliance Standards</h4><p>IEC 60898-1, IEC 60947-2, IEEE 519-2014 compliance guidelines. How reports align with international engineering standards.</p></div>
+        </div>
+        <div id="helpModal" style="display:none; margin-top:16px; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:var(--spacing-md)">
+          <h4 id="helpTitle" style="margin-bottom:var(--spacing-sm); font-weight:600"></h4>
+          <div id="helpContent" style="color:var(--text-soft); line-height:1.6"></div>
+          <button class="btn btn-outline" style="margin-top:var(--spacing-md)" onclick="document.getElementById('helpModal').style.display='none'">Close</button>
+        </div>
+        <div class="settings-card" style="margin-top:16px"><h4><i class="fas fa-headset"></i> Need More Help?</h4><p style="color:var(--text-soft); margin-bottom:var(--spacing-md)">Contact our engineering support team for assistance:</p><div style="display:flex; gap:var(--spacing-md); flex-wrap:wrap"><a href="mailto:support@nexora.tech" class="btn btn-outline"><i class="fas fa-envelope"></i> Email Support</a><a href="#" class="btn btn-outline"><i class="fas fa-book"></i> Documentation Portal</a><a href="#" class="btn btn-outline"><i class="fas fa-comments"></i> Community Forum</a></div></div>
+      </section>
+
+      <!-- ✅ EDIT SIGNATURE VIEW - BARU -->
+      <section id="view-edit-signature" class="view-section">
+        <div class="page-header">
+          <div class="page-title">
+            <h2><i class="fas fa-pen-to-square"></i> Edit Data Tanda Tangan</h2>
+            <p>Kelola informasi penandatangan dokumen laporan engineering</p>
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label"><i class="fas fa-file-alt"></i> Kode Dokumen</span>
+          <div class="settings-control">
+            <input type="text" id="editDocCode" value="ENG-RPT-MCB-20260526" style="width:200px" placeholder="Contoh: ENG-RPT-MCB-YYYYMMDD">
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label"><i class="fas fa-code-branch"></i> Revisi</span>
+          <div class="settings-control">
+            <input type="text" id="editDocRev" value="2.2" style="width:200px" placeholder="Contoh: 1.0, 2.2, Final">
+          </div>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label"><i class="fas fa-map-marker-alt"></i> Kota / Tempat</span>
+          <div class="settings-control">
+            <input type="text" id="editLocation" value="Jakarta" style="width:200px" placeholder="Contoh: Jakarta, Bandung, Surabaya">
+          </div>
+        </div>
+        
+        <div class="settings-grid">
+          <!-- Signatory 1 -->
+          <div class="settings-card">
+            <h4><i class="fas fa-user-tie"></i> Penandatangan 1 - Engineering Manager</h4>
+            <div class="settings-row">
+              <span class="settings-label">Jabatan</span>
+              <div class="settings-control">
+                <input type="text" id="editJobTitle1" value="Engineering Manager" style="width:200px" placeholder="Contoh: Engineering Manager">
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">Nama Lengkap</span>
+              <div class="settings-control">
+                <input type="text" id="editName1" value="Ahmad Fauzi" style="width:200px" placeholder="Nama lengkap">
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">NIP</span>
+              <div class="settings-control">
+                <input type="text" id="editNip1" value="25010002" style="width:200px" placeholder="Nomor Induk Pegawai">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Signatory 2 -->
+          <div class="settings-card">
+            <h4><i class="fas fa-user-cog"></i> Penandatangan 2 - Plant Director</h4>
+            <div class="settings-row">
+              <span class="settings-label">Jabatan</span>
+              <div class="settings-control">
+                <input type="text" id="editJobTitle2" value="Plant Director" style="width:200px" placeholder="Contoh: Plant Director">
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">Nama Lengkap</span>
+              <div class="settings-control">
+                <input type="text" id="editName2" value="Budi Santoso" style="width:200px" placeholder="Nama lengkap">
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">NIP</span>
+              <div class="settings-control">
+                <input type="text" id="editNip2" value="25010002" style="width:200px" placeholder="Nomor Induk Pegawai">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn btn-success" onclick="Report.saveDocConfig()"><i class="fas fa-save"></i> Simpan Perubahan</button>
+          <button class="btn btn-outline" onclick="Report.resetDocConfig()"><i class="fas fa-undo"></i> Reset</button>
+         
+        </div>
+        
+        <!-- Preview Mini Signature Block -->
+        <div class="settings-card" style="margin-top:16px">
+          <h4><i class="fas fa-eye"></i> Preview Tanda Tangan</h4>
+          <div id="signaturePreview" style="background:var(--bg-soft); padding:12px; border-radius:var(--radius-md); font-size:var(--text-sm)">
+            <!-- Preview will be injected here -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Floating Page Nav -->
+  <nav class="nav-bar no-print" id="pageNav" style="display:none; position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--bg-card); padding:8px 16px; border-radius:var(--radius-lg); display:flex; gap:8px; border:1px solid var(--border); box-shadow:var(--shadow-lg); z-index:var(--z-sticky)">
+    <button class="btn btn-outline" id="btnPrev" onclick="Report.goPage(-1)" disabled><i class="fas fa-chevron-left"></i></button>
+    <span class="page-info" id="pageInfo" style="color:var(--text-soft); font-weight:500; min-width:50px; text-align:center">1 / 1</span>
+    <button class="btn btn-outline" id="btnNext" onclick="Report.goPage(1)"><i class="fas fa-chevron-right"></i></button>
+  </nav>
+
+  <!-- ✅ A4 Container for Print -->
+  <div id="a4PrintContainer"></div>
+
+  <script>
+    const Report = {
+      API_URL: 'http://127.0.0.1:3001/api/auth',
+      pages: [], currentPage: 1, allMachines: [], allMachinesStats: [], currentView: 'dashboard',
+      
+      // Taruh di bagian paling atas objek Report
+      docConfig: {
+        docCode: 'ENG-RPT-MCB-20260526',
+        docRev: '2.2',
+        location: 'Jakarta',
+        signatory1: { jobTitle: 'Engineering Manager', name: 'Ahmad Fauzi', nip: '25010002' },
+        signatory2: { jobTitle: 'Plant Director', name: 'Budi Santoso', nip: '25010002' }
+      },
+      
+      // ===== SCIENTIFIC CONSTANTS =====
+      THRESHOLDS: {
+        industrial: { 
+          current: { warn: 55, crit: 63, unit: 'A' }, 
+          voltage: { min: 207, max: 253, nominal: 230, unit: 'V' }, 
+          power: { warn: 12000, crit: 14500, unit: 'W' }, 
+          powerFactor: { min: 0.85, target: 0.95 }, 
+          frequency: { min: 49.5, max: 50.5, nominal: 50, unit: 'Hz' }, 
+          powerQuality: { 
+            voltageDeviation: { warn: 5, crit: 10, unit: '%' },
+            currentUtilization: { warn: 85, crit: 95, unit: '%' },
+            reactiveRatio: { warn: 0.5, crit: 0.75, unit: 'ratio' },
+            pqiMin: { warn: 0.85, crit: 0.75, unit: 'index' }
+          }, 
+          temperature: { warn: 65, crit: 80, unit: '°C' } 
+        },
+        commercial: { 
+          current: { warn: 45, crit: 55, unit: 'A' }, 
+          voltage: { min: 216, max: 244, nominal: 230, unit: 'V' }, 
+          power: { warn: 9000, crit: 11500, unit: 'W' }, 
+          powerFactor: { min: 0.9, target: 0.98 }, 
+          frequency: { min: 49.7, max: 50.3, nominal: 50, unit: 'Hz' }, 
+          powerQuality: { 
+            voltageDeviation: { warn: 4, crit: 8, unit: '%' },
+            currentUtilization: { warn: 80, crit: 90, unit: '%' },
+            reactiveRatio: { warn: 0.4, crit: 0.6, unit: 'ratio' },
+            pqiMin: { warn: 0.88, crit: 0.80, unit: 'index' }
+          }, 
+          temperature: { warn: 55, crit: 70, unit: '°C' } 
+        },
+        light: { 
+          current: { warn: 30, crit: 45, unit: 'A' }, 
+          voltage: { min: 220, max: 240, nominal: 230, unit: 'V' }, 
+          power: { warn: 6000, crit: 8500, unit: 'W' }, 
+          powerFactor: { min: 0.92, target: 0.99 }, 
+          frequency: { min: 49.8, max: 50.2, nominal: 50, unit: 'Hz' }, 
+          powerQuality: { 
+            voltageDeviation: { warn: 3, crit: 6, unit: '%' },
+            currentUtilization: { warn: 75, crit: 85, unit: '%' },
+            reactiveRatio: { warn: 0.3, crit: 0.5, unit: 'ratio' },
+            pqiMin: { warn: 0.90, crit: 0.85, unit: 'index' }
+          }, 
+          temperature: { warn: 50, crit: 65, unit: '°C' } 
+        }
+      },
+      
+      CONSTANTS: {
+        carbonFactors: {
+          'java-bali': 0.82, 'sumatra': 0.88, 'kalimantan': 0.91, 'sulawesi': 0.79, 'default': 0.85
+        },
+        sqrt3: Math.sqrt(3),
+        nominalVoltage: 230,
+        mtbfBaseHours: 87600,
+        efficiencyTarget: 0.94,
+        pfMinimum: 0.85,
+        pfTarget: 0.95,
+        tariffPerKwh: { 'industrial': 1444.70, 'commercial': 1650.00, 'default': 1467.79 },
+        weights: { powerFactor: 0.4, loadFactor: 0.35, dataCompleteness: 0.25 },
+        gridLossFactor: 1.08
+      },
+
+      async init() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').value = today;
+        document.getElementById('endDate').value = today;
+        this.setupEventListeners();
+        this.loadDocConfig();
+        this.switchView('dashboard');
+        await this.generateReport();
+      },
+      
+      setupEventListeners() {
+        document.getElementById('menuToggle')?.addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+        document.addEventListener('click', (e) => {
+          const sidebar = document.getElementById('sidebar'), toggle = document.getElementById('menuToggle');
+          if (window.innerWidth < 1024 && sidebar.classList.contains('open') && !sidebar.contains(e.target) && !toggle.contains(e.target)) sidebar.classList.remove('open');
+        });
+        document.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            this.switchView(item.dataset.view);
+            if (window.innerWidth < 1024) document.getElementById('sidebar').classList.remove('open');
+          });
+        });
+        document.getElementById('pqSearch')?.addEventListener('input', (e) => this.filterTable(e.target.value, 'pqTableBody'));
+        ['startDate', 'endDate', 'thresholdProfile'].forEach(id => document.getElementById(id)?.addEventListener('change', () => this.updateMeta()));
+      },
+
+      switchView(viewName) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(`view-${viewName}`);
+        if (target) { 
+          target.classList.add('active'); 
+          this.currentView = viewName;
+          
+          if (viewName === 'edit-signature') { this.loadDocConfig(); }
+          if (viewName === 'power-quality') this.renderPowerQuality();
+          if (viewName === 'reliability') this.renderReliability();
+          if (viewName === 'sustainability') this.renderSustainability();
+        }
+        document.title = { 
+          'dashboard':'Dashboard • Nexora Engineering', 
+          'power-quality':'Power Quality • Nexora Engineering', 
+          'reliability':'Reliability • Nexora Engineering', 
+          'sustainability':'Sustainability • Nexora Engineering', 
+          'settings':'Settings • Nexora Engineering', 
+          'help':'Help • Nexora Engineering',
+          'edit-signature':'Edit Data • Nexora Engineering'
+        }[viewName] || 'Nexora Engineering';
+      },
+        loadDocConfig() {
+          try {
+            const saved = localStorage.getItem('docConfig');
+            if (saved) { this.docConfig = JSON.parse(saved); }
+            
+            document.getElementById('editDocCode').value = this.docConfig.docCode;
+            document.getElementById('editDocRev').value = this.docConfig.docRev;
+            document.getElementById('editLocation').value = this.docConfig.location;
+            document.getElementById('editJobTitle1').value = this.docConfig.signatory1.jobTitle;
+            document.getElementById('editName1').value = this.docConfig.signatory1.name;
+            document.getElementById('editNip1').value = this.docConfig.signatory1.nip;
+            document.getElementById('editJobTitle2').value = this.docConfig.signatory2.jobTitle;
+            document.getElementById('editName2').value = this.docConfig.signatory2.name;
+            document.getElementById('editNip2').value = this.docConfig.signatory2.nip;
+            
+            this.updateDocPreview();
+          } catch(e) { console.warn('Failed to load doc config:', e); }
+        },
+
+        saveDocConfig() {
+          this.docConfig.docCode = document.getElementById('editDocCode').value.trim() || 'ENG-RPT-MCB-00000000';
+          this.docConfig.docRev = document.getElementById('editDocRev').value.trim() || '1.0';
+          this.docConfig.location = document.getElementById('editLocation').value.trim() || 'Jakarta';
+          this.docConfig.signatory1.jobTitle = document.getElementById('editJobTitle1').value.trim() || 'Engineering Manager';
+          this.docConfig.signatory1.name = document.getElementById('editName1').value.trim() || 'Ahmad Fauzi';
+          this.docConfig.signatory1.nip = document.getElementById('editNip1').value.trim() || '25010002';
+          this.docConfig.signatory2.jobTitle = document.getElementById('editJobTitle2').value.trim() || 'Plant Director';
+          this.docConfig.signatory2.name = document.getElementById('editName2').value.trim() || 'Budi Santoso';
+          this.docConfig.signatory2.nip = document.getElementById('editNip2').value.trim() || '25010002';
+
+          localStorage.setItem('docConfig', JSON.stringify(this.docConfig));
+          this.updateDocPreview();
+
+          const docCodeText = `DOC: ${this.docConfig.docCode} • REV: ${this.docConfig.docRev}`;
+            document.querySelectorAll('#a4PrintContainer .doc-code').forEach(el => {
+              el.textContent = docCodeText;
+            });
+
+            // 3. ✅ UPDATE TANDA TANGAN HANYA DI HALAMAN TERAKHIR (Page 3)
+            const sigElement = document.querySelector('#a4PrintContainer .sig-official');
+            if (sigElement) {
+              sigElement.outerHTML = this.renderSignatureBlock();
+            }
+          this.showAlert('✅ Data Tersimpan & Dokumen Langsung Terupdate!', 'success');
+        },
+
+        resetDocConfig() {
+          if (!confirm('Reset semua konfigurasi dokumen ke default?')) return;
+          this.docConfig = {
+            docCode: 'ENG-RPT-MCB-20260526', docRev: '2.2', location: 'Jakarta',
+            signatory1: { jobTitle: 'Engineering Manager', name: 'Ahmad Fauzi', nip: '25010002' },
+            signatory2: { jobTitle: 'Plant Director', name: 'Budi Santoso', nip: '25010002' }
+          };
+          localStorage.setItem('docConfig', JSON.stringify(this.docConfig));
+          this.loadDocConfig();
+          this.showAlert('🔄 Konfigurasi dokumen direset ke default', 'warning');
+        },
+
+        updateDocPreview() {
+          const cfg = this.docConfig;
+          const dateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+          document.getElementById('signaturePreview').innerHTML = `
+            <div style="background:var(--bg-main); padding:8px; border-radius:6px; margin-bottom:12px; text-align:center; font-size:0.85em; font-family:var(--font-mono)">
+              <strong style="color:var(--primary)">DOC: ${cfg.docCode} • REV: ${cfg.docRev}</strong>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; text-align:center; font-family:var(--font-base)">
+              <div><div style="font-weight:700; margin-bottom:4px">${cfg.signatory1.jobTitle}</div>
+                  <div style="font-style:italic; color:var(--text-muted); margin-bottom:12px; font-size:0.9em">Engineering Manager</div>
+                  <div style="border-bottom:1px solid var(--border); height:30px; margin-bottom:8px"></div>
+                  <div style="font-weight:600">${cfg.signatory1.name}</div><div style="color:var(--text-muted); font-size:0.9em">NIP: ${cfg.signatory1.nip}</div></div>
+              <div><div style="font-weight:700; margin-bottom:4px">${cfg.signatory2.jobTitle}</div>
+                  <div style="font-style:italic; color:var(--text-muted); margin-bottom:12px; font-size:0.9em">Plant Director</div>
+                  <div style="border-bottom:1px solid var(--border); height:30px; margin-bottom:8px"></div>
+                  <div style="font-weight:600">${cfg.signatory2.name}</div><div style="color:var(--text-muted); font-size:0.9em">NIP: ${cfg.signatory2.nip}</div></div>
+            </div>
+            <div style="text-align:right; margin-top:12px; font-weight:600; font-size:0.9em">${cfg.location}, ${dateStr}</div>
+          `;
+        },
+
+        renderSignatureBlock() {
+          const cfg = this.docConfig;
+          const sigDateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+          return `<div class="sig-official">
+            <div class="sig-date">${cfg.location}, ${sigDateStr}</div>
+            <div class="sig-grid">
+              <div class="sig-col"><div class="sig-title">${cfg.signatory1.jobTitle}</div><div class="sig-role">Engineering Manager</div><div class="sig-line"></div><div class="sig-name">${cfg.signatory1.name}</div><div class="sig-nip">NIP : ${cfg.signatory1.nip}</div></div>
+              <div class="sig-col"><div class="sig-title">${cfg.signatory2.jobTitle}</div><div class="sig-role">Plant Director</div><div class="sig-line"></div><div class="sig-name">${cfg.signatory2.name}</div><div class="sig-nip">NIP : ${cfg.signatory2.nip}</div></div>
+            </div></div>`;
+        },
+      async generateReport() {
+        const startDate = document.getElementById('startDate')?.value, endDate = document.getElementById('endDate')?.value;
+        const granularity = document.getElementById('granularity')?.value || 'daily';
+        const thresholdProfile = document.getElementById('thresholdProfile')?.value || 'industrial';
+        if (!startDate || !endDate) { this.showAlert('Please select date range', 'warning'); return; }
+        this.toggleLoading(true); this.updateMeta();
+        try {
+          await this.fetchAllMachines(); await this.fetchAllMachinesStats(startDate, endDate, granularity);
+          this.renderDashboard(thresholdProfile);
+          await this.renderA4ToBody(startDate, endDate, granularity, thresholdProfile);
+        } catch (e) {
+          console.warn('Using demo data:', e); this.useDemoData();
+          this.renderDashboard(thresholdProfile);
+          await this.renderA4ToBody(startDate, endDate, granularity, thresholdProfile);
+        } finally { this.toggleLoading(false); }
+      },
+      
+      async fetchAllMachines() {
+        const token = localStorage.getItem('authToken'); if (!token) throw new Error('Auth token required');
+        const res = await fetch(this.API_URL + '/mcb-machines', { headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json(); if (!data.success) throw new Error(data.message || 'API error');
+        this.allMachines = data.machines || [];
+      },
+      
+      async fetchAllMachinesStats(startDate, endDate, granularity) {
+        this.allMachinesStats = []; const token = localStorage.getItem('authToken');
+        const startISO = new Date(startDate); startISO.setUTCHours(0,0,0,0);
+        const endISO = new Date(endDate); endISO.setUTCHours(23,59,59,999);
+        for (const machine of this.allMachines) {
+          try {
+            const params = new URLSearchParams({ start: startISO.toISOString(), end: endISO.toISOString(), granularity: granularity, include_quality: 'true', include_events: 'true' });
+            const res = await fetch(`${this.API_URL}/mcb-machines/${machine.id}/readings?${params}`, { headers: { 'Authorization': 'Bearer ' + token } });
+            const data = await res.json();
+            if (data.success && data.readings?.length > 0) {
+              const stats = this.calculateStats(data.readings, machine, granularity);
+              this.allMachinesStats.push({ machine, stats, rawCount: data.readings.length });
+            } else this.allMachinesStats.push({ machine, stats: this.zeroStats(), rawCount: 0 });
+          } catch (e) { this.allMachinesStats.push({ machine, stats: this.zeroStats(), rawCount: 0 }); }
+        }
+      },
+      
+      useDemoData() {
+        this.allMachines = [
+          { id: 'MCB-001', name: 'MCB-Line-A1', location: { code: 'PLT-01', grid: 'java-bali' }, profile: 'industrial', max_current: 63, electricity_rate: 1444.70 },
+          { id: 'MCB-002', name: 'MCB-Line-B2', location: { code: 'PLT-02', grid: 'java-bali' }, profile: 'industrial', max_current: 63, electricity_rate: 1444.70 },
+          { id: 'MCB-003', name: 'MCB-Line-C3', location: { code: 'PLT-03', grid: 'sumatra' }, profile: 'commercial', max_current: 45, electricity_rate: 1650.00 }
+        ];
+        this.allMachinesStats = this.allMachines.map(m => ({
+          machine: m, stats: {
+            avgCurrent: 42.5 + Math.random() * 15, avgVoltage: 225 + Math.random() * 15, avgPower: 9500 + Math.random() * 4000,
+            avgPowerFactor: 0.88 + Math.random() * 0.1, avgFrequency: 49.8 + Math.random() * 0.4, peakCurrent: 58, minCurrent: 28, stdCurrent: 5.2,
+            peakPower: 13200, loadFactor: 0.72, totalEnergy: 245.5 + Math.random() * 100, totalCarbon: 0, estimatedCost: 0,
+            voltageDeviation: 2.5 + Math.random() * 4,
+            currentUtilization: 60 + Math.random() * 30,
+            reactiveRatio: 0.3 + Math.random() * 0.4,
+            powerQualityIndex: 0.75 + Math.random() * 0.2,
+            voltageSagCount: Math.floor(Math.random() * 3),
+            voltageSwellCount: Math.floor(Math.random() * 2), avgTemperature: 45 + Math.random() * 15, peakTemperature: 62,
+            totalOperationHours: 168, uptimePercent: 98.5 + Math.random() * 1.5, tripCount: Math.floor(Math.random() * 2),
+            mtbfEstimate: 72000, voltageCompliance: 97 + Math.random() * 3, currentCompliance: 95 + Math.random() * 5,
+            pfCompliance: 92 + Math.random() * 8, sampleCount: 400, dataCompleteness: 96 + Math.random() * 4, lastSampleTime: new Date().toISOString(),
+            emissionFactor: this._getCarbonFactor(m.location?.grid), efficiencyIndex: 0.78 + Math.random() * 0.15
+          }, rawCount: 400
+        }));
+        this.allMachinesStats.forEach(item => { 
+          const s = item.stats; 
+          const ef = this._getCarbonFactor(item.machine.location?.grid);
+          s.totalCarbon = s.totalEnergy * ef * this.CONSTANTS.gridLossFactor; 
+          s.estimatedCost = s.totalEnergy * (item.machine.electricity_rate || 1444.70);
+          s.emissionFactor = ef;
+        });
+      },
+
+      zeroStats() { 
+        return { 
+          avgCurrent: 0, avgVoltage: 0, avgPower: 0, avgPowerFactor: 0, avgFrequency: 0, 
+          peakCurrent: 0, minCurrent: 0, stdCurrent: 0, peakPower: 0, loadFactor: 0, 
+          totalEnergy: 0, totalCarbon: 0, estimatedCost: 0,
+          voltageDeviation: null, currentUtilization: null, reactiveRatio: null, powerQualityIndex: 0,
+          voltageSagCount: 0, voltageSwellCount: 0, 
+          avgTemperature: null, peakTemperature: null, 
+          totalOperationHours: 0, uptimePercent: 100, tripCount: 0, mtbfEstimate: null, 
+          voltageCompliance: 100, currentCompliance: 100, pfCompliance: 100, 
+          sampleCount: 0, dataCompleteness: 0, lastSampleTime: null, 
+          emissionFactor: this.CONSTANTS.carbonFactors.default, efficiencyIndex: 0 
+        }; 
+      },
+      
+      calculateStats(readings, machine, granularity) {
+        if (!readings?.length) return this.zeroStats();
+        const thresholds = this.THRESHOLDS[machine?.profile || 'industrial'];
+        const valid = readings.filter(r => r.current != null && r.voltage != null);
+        if (!valid.length) return this.zeroStats();
+        
+        const timestamps = valid.map(r => new Date(r.timestamp).getTime()).sort((a,b) => a-b);
+        const spanHours = Math.max(1, (timestamps[timestamps.length-1] - timestamps[0]) / 3600000);
+        
+        const getVal = (r, possibleKeys, fallback = null) => {
+          const keys = Array.isArray(possibleKeys) ? possibleKeys : [possibleKeys];
+          for (const key of keys) {
+            if (r[key] != null && r[key] !== '') return parseFloat(r[key]);
+            const variations = [key, key.toLowerCase(), key.replace(/_/g,''), key.replace(/-/g,'_'), key+'_kwh', 'total_'+key, key.replace('kwh','kWh')];
+            for (const v of variations) { if (r[v] != null && r[v] !== '') return parseFloat(r[v]); }
+          }
+          return fallback;
+        };
+        
+        const avg = (keys) => { const vals = valid.map(r => getVal(r, keys)).filter(v => v != null && !isNaN(v)); return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null; };
+        const sum = (keys) => { const vals = valid.map(r => getVal(r, keys)).filter(v => v != null && !isNaN(v)); return vals.reduce((a,b) => a+b, 0); };
+        const peak = (keys) => { const vals = valid.map(r => getVal(r, keys)).filter(v => v != null && !isNaN(v)); return vals.length ? Math.max(...vals) : null; };
+        
+        let totalEnergy = sum(['energy_kwh','energy','total_energy','energyKwh','kwh']);
+        if (!totalEnergy && valid.length >= 2) {
+          const firstEnergy = getVal(valid[0], ['energy_kwh','energy','total_energy']);
+          const lastEnergy = getVal(valid[valid.length-1], ['energy_kwh','energy','total_energy']);
+          if (firstEnergy != null && lastEnergy != null && lastEnergy >= firstEnergy) totalEnergy = lastEnergy - firstEnergy;
+        }
+        if (!totalEnergy && valid.length > 1) {
+          const avgPower = avg(['power','active_power','watts','p_active']);
+          if (avgPower != null && avgPower > 0) totalEnergy = (avgPower * spanHours) / 1000;
+        }
+        if (!totalEnergy || isNaN(totalEnergy) || totalEnergy < 0) totalEnergy = 0;
+        
+        const emissionFactor = this._getCarbonFactor(machine?.location?.grid || machine?.location?.name);
+        const totalCarbon = totalEnergy * emissionFactor * this.CONSTANTS.gridLossFactor;
+        const tariff = machine?.electricity_rate || this.CONSTANTS.tariffPerKwh[machine?.profile] || this.CONSTANTS.tariffPerKwh.default;
+        const estimatedCost = totalEnergy * tariff;
+        
+        const avgPower = avg(['power','active_power','watts']) || 0;
+        const peakPower = peak(['power','active_power','peak_power','max_power']) || avgPower;
+        const loadFactor = peakPower > 0 ? avgPower / peakPower : 0;
+        const avgPF = avg(['power_factor','pf','cos_phi']) || 0.92;
+        
+        const nominalVoltage = this.CONSTANTS.nominalVoltage;
+        const avgVoltage = avg(['voltage','v_rms','v']) || nominalVoltage;
+        const avgCurrent = avg(['current','i_rms','amps','a']) || 0;
+        
+        const voltageDeviation = avgVoltage != null ? Math.abs(avgVoltage - nominalVoltage) / nominalVoltage * 100 : null;
+        const currentUtilization = avgCurrent != null && machine?.max_current ? (avgCurrent / machine.max_current) * 100 : null;
+        const reactiveRatio = avgPF != null && avgPF > 0 && avgPF <= 1 ? Math.sqrt(1 - Math.pow(avgPF, 2)) / avgPF : null;
+        
+        const voltageCompliance = valid.length > 0 ? (valid.filter(r => { const v = getVal(r,['voltage','v_rms']); return v != null && v >= thresholds.voltage.min && v <= thresholds.voltage.max; }).length / valid.length) * 100 : 100;
+        const currentCompliance = valid.length > 0 ? (valid.filter(r => { const c = getVal(r,['current','i_rms']); return c != null && c >= (machine.min_current||0) && c <= (machine.max_current||Infinity); }).length / valid.length) * 100 : 100;
+        const pfCompliance = valid.length > 0 ? (valid.filter(r => { const pf = getVal(r,['power_factor','pf']); return pf != null && pf >= this.CONSTANTS.pfMinimum; }).length / valid.length) * 100 : 100;
+        
+        const powerQualityIndex = (Math.min(1, avgPF) * 0.4) + (Math.min(1, voltageCompliance/100) * 0.35) + (Math.min(1, currentCompliance/100) * 0.25);
+        
+        const voltageMin = thresholds.voltage.min * 0.95;
+        const voltageMax = thresholds.voltage.max * 1.05;
+        const voltageSagCount = valid.filter(r => { const v = getVal(r,['voltage','v_rms','v']); return v != null && v < voltageMin; }).length;
+        const voltageSwellCount = valid.filter(r => { const v = getVal(r,['voltage','v_rms','v']); return v != null && v > voltageMax; }).length;
+        
+        const tripCount = valid.filter(r => r.trip_detected === true || r.trip === true).length;
+        const uptimePercent = valid.length > 0 ? ((valid.length - valid.filter(r => { const p = getVal(r,['power','active_power']); return p === 0 || p == null; }).length) / valid.length) * 100 : 100;
+        const mtbfEstimate = tripCount > 0 && spanHours > 0 ? (spanHours / tripCount) * 8760 : this.CONSTANTS.mtbfBaseHours;
+        
+        const dataCompleteness = Math.min(100, Math.round((valid.length / this._expectedSamples(spanHours, granularity)) * 1000) / 10);
+        const efficiencyIndex = (avgPF * this.CONSTANTS.weights.powerFactor) + (Math.min(1, loadFactor / 0.85) * this.CONSTANTS.weights.loadFactor) + ((dataCompleteness / 100) * this.CONSTANTS.weights.dataCompleteness);
+        
+        return {
+          avgCurrent, avgVoltage, avgPower, avgPowerFactor: avgPF,
+          avgFrequency: avg(['frequency','freq','hz']) || 50,
+          peakCurrent: peak(['current','i_rms']),
+          minCurrent: Math.min(...valid.map(r => getVal(r,['current','i_rms'])).filter(v => v != null)),
+          stdCurrent: this._calculateStdDev(valid, r => getVal(r,['current','i_rms'])),
+          peakPower, loadFactor, totalEnergy, totalCarbon, estimatedCost, emissionFactor,
+          gridRegion: machine?.location?.grid || 'default',
+          voltageDeviation, currentUtilization, reactiveRatio, powerQualityIndex,
+          voltageSagCount, voltageSwellCount,
+          avgTemperature: avg(['temperature','temp','celsius']),
+          peakTemperature: peak(['temperature','temp']),
+          totalOperationHours: Math.round(spanHours), uptimePercent, tripCount, mtbfEstimate,
+          voltageCompliance, currentCompliance, pfCompliance,
+          overallCompliance: (voltageCompliance + currentCompliance + pfCompliance) / 3,
+          sampleCount: valid.length, dataCompleteness, efficiencyIndex,
+          lastSampleTime: valid[valid.length-1]?.timestamp
+        };
+      },
+      
+      _getCarbonFactor(location) {
+        const factors = this.CONSTANTS.carbonFactors;
+        const loc = (location || '').toLowerCase();
+        if (loc.includes('java') || loc.includes('bali') || loc.includes('jakarta')) return factors['java-bali'];
+        if (loc.includes('sumatra') || loc.includes('medan') || loc.includes('palembang')) return factors['sumatra'];
+        if (loc.includes('kalimantan') || loc.includes('borneo')) return factors['kalimantan'];
+        if (loc.includes('sulawesi') || loc.includes('makassar')) return factors['sulawesi'];
+        return factors['default'];
+      },
+      
+      _calculateStdDev(data, extractor) {
+        const values = data.map(extractor).filter(v => v != null);
+        if (values.length < 2) return null;
+        const mean = values.reduce((a,b) => a+b, 0) / values.length;
+        const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / (values.length - 1);
+        return Math.sqrt(variance);
+      },
+      
+      _expectedSamples(spanHours, granularity) { const rates = { hourly: 1, daily: 24, weekly: 168 }; return Math.max(1, Math.round(spanHours / (rates[granularity] || 24))); },
+
+      renderDashboard(thresholdProfile) { const thresholds = this.THRESHOLDS[thresholdProfile]; this.renderSummaryCards(thresholds); this.renderMetricsSection(thresholds); this.renderAlerts(thresholds); this.updateNav(); },
+      
+      renderSummaryCards(thresholds) {
+        const container = document.getElementById('summaryCards'); if (!container) return;
+        const totalMachines = this.allMachines.length;
+        const totalEnergy = this.allMachinesStats.reduce((sum, i) => sum + (i.stats?.totalEnergy || 0), 0);
+        const totalCarbon = this.allMachinesStats.reduce((sum, i) => sum + (i.stats?.totalCarbon || 0), 0);
+        const avgCompliance = this.allMachinesStats.length ? this.allMachinesStats.reduce((sum, i) => sum + i.stats.voltageCompliance, 0) / this.allMachinesStats.length : 100;
+        const fleetStatus = this._getFleetStatus(thresholds);
+        let energyDisplay, energyUnit;
+        if (totalEnergy >= 1000) { energyDisplay = (totalEnergy / 1000).toFixed(2); energyUnit = 'MWh'; }
+        else { energyDisplay = totalEnergy.toFixed(1); energyUnit = 'kWh'; }
+        
+        container.innerHTML = `
+          <div class="summary-card ${fleetStatus} hover-lift"><div class="card-icon"><i class="fas fa-industry"></i></div><div class="card-value">${totalMachines}</div><div class="card-label">Active Machines</div><div class="card-trend ${fleetStatus === 'danger' ? 'down' : fleetStatus === 'warning' ? 'neutral' : 'up'}"><i class="fas fa-${fleetStatus === 'danger' ? 'triangle-exclamation' : fleetStatus === 'warning' ? 'circle-info' : 'check'}"></i> ${fleetStatus === 'danger' ? 'Attention Required' : fleetStatus === 'warning' ? 'Monitor Closely' : 'All Systems Nominal'}</div></div>
+          <div class="summary-card hover-lift"><div class="card-icon"><i class="fas fa-bolt"></i></div><div class="card-value">${energyDisplay}<span style="font-size:0.7em"> ${energyUnit}</span></div><div class="card-label">Total Energy</div><div class="card-trend neutral"><i class="fas fa-chart-line"></i> Period Total</div></div>
+          <div class="summary-card hover-lift"><div class="card-icon"><i class="fas fa-leaf"></i></div><div class="card-value">${(totalCarbon).toFixed(1)}<span style="font-size:0.7em"> kg CO₂</span></div><div class="card-label">Carbon Footprint</div><div class="card-trend neutral"><i class="fas fa-calculator"></i> Grid: ${this.CONSTANTS.carbonFactors.default} kg/kWh</div><div class="scientific-note">Source: IPCC 2006, IEA 2024</div></div>
+          <div class="summary-card hover-lift"><div class="card-icon"><i class="fas fa-shield-check"></i></div><div class="card-value">${avgCompliance.toFixed(1)}<span style="font-size:0.7em">%</span></div><div class="card-label">Avg. Compliance</div><div class="card-trend ${avgCompliance >= 99 ? 'up' : avgCompliance >= 95 ? 'neutral' : 'down'}"><i class="fas fa-${avgCompliance >= 99 ? 'arrow-up' : avgCompliance >= 95 ? 'minus' : 'arrow-down'}"></i> IEC 60038</div></div>
+        `;
+      },
+      
+      renderMetricsSection(thresholds) {
+        const container = document.getElementById('metricsSection'); if (!container) return;
+        if (this.allMachinesStats.length === 0) { container.innerHTML = '<div class="empty-state"><i class="fas fa-plug-circle-exclamation"></i><h3>No Data</h3><p>Configure machines or check API</p></div>'; return; }
+        container.innerHTML = this.allMachinesStats.map((item, idx) => {
+          const s = item.stats, m = item.machine;
+          const curStat = this.evaluateStatus(s.avgCurrent, thresholds.current);
+          const voltStat = this.evaluateStatus(s.avgVoltage, thresholds.voltage, 'range');
+          const overall = curStat.status === 'crit' || voltStat.status === 'crit' ? 'crit' : curStat.status === 'warn' || voltStat.status === 'warn' ? 'warn' : 'ok';
+          return `<div class="metric-card hover-lift" style="animation-delay:${idx*50}ms"><div class="metric-header"><div class="metric-title"><i class="fas fa-microchip"></i> ${m.name}</div><div class="metric-actions"><button title="Details"><i class="fas fa-info-circle"></i></button><button title="Export"><i class="fas fa-download"></i></button></div></div><div class="metric-body"><div class="metric-row"><span class="metric-label">Current (Avg)</span><span class="metric-value">${s.avgCurrent?.toFixed(2) || '0.00'} A <span class="status-badge ${curStat.status}">${curStat.label}</span></span></div><div class="metric-row"><span class="metric-label">Voltage (Avg)</span><span class="metric-value">${s.avgVoltage?.toFixed(1) || '0.0'} V <span class="status-badge ${voltStat.status}">${voltStat.label}</span></span></div><div class="metric-row"><span class="metric-label">Power Factor</span><span class="metric-value">${s.avgPowerFactor?.toFixed(3) || '0.000'} <span class="status-badge ${s.avgPowerFactor >= thresholds.powerFactor.min ? 'ok' : 'warn'}">${s.avgPowerFactor >= thresholds.powerFactor.min ? 'OK' : 'LOW'}</span></span></div><div class="metric-row"><span class="metric-label">Data Quality</span><span class="metric-value"><div class="progress-bar" style="width:80px"><div class="progress-fill ${s.dataCompleteness >= 95 ? 'ok' : s.dataCompleteness >= 80 ? 'warn' : 'crit'}" style="width:${s.dataCompleteness}%"></div></div> ${s.dataCompleteness}%</span></div></div></div>`;
+        }).join('');
+      },
+      
+      renderAlerts(thresholds) {
+        const container = document.getElementById('alertsContainer'); if (!container) return;
+        const alerts = this._generateAlerts(thresholds);
+        if (alerts.length === 0) { container.innerHTML = `<div class="alert-panel info"><div class="alert-icon"><i class="fas fa-check-circle"></i></div><div class="alert-content"><h4>All Systems Nominal</h4><p>All machines operating within tolerances. No actions required.</p><div class="alert-time">Last check: ${new Date().toLocaleTimeString('id-ID')}</div></div></div>`; return; }
+        container.innerHTML = alerts.map(a => `<div class="alert-panel ${a.type}"><div class="alert-icon"><i class="fas fa-${a.type === 'crit' ? 'triangle-exclamation' : a.type === 'warn' ? 'circle-exclamation' : 'info-circle'}"></i></div><div class="alert-content"><h4>[${a.type.toUpperCase()}] ${a.machine}</h4><p>${a.msg}</p><div class="alert-time">${new Date().toLocaleString('id-ID')}</div></div></div>`).join('');
+      },
+      
+      renderPowerQuality() {
+        const tbody = document.getElementById('pqTableBody'), qcards = document.getElementById('qualityCards');
+        if (!tbody || !qcards) return;
+        const thresholds = this.THRESHOLDS[document.getElementById('thresholdProfile')?.value || 'industrial'];
+        const pq = thresholds.powerQuality;
+        
+        tbody.innerHTML = this.allMachinesStats.map(item => {
+          const s = item.stats, m = item.machine;
+          const voltDev = s.voltageDeviation || 0, currUtil = s.currentUtilization || 0, reactRatio = s.reactiveRatio || 0, pqi = s.powerQualityIndex || 0;
+          const vdStat = voltDev <= pq.voltageDeviation.warn ? 'ok' : voltDev <= pq.voltageDeviation.crit ? 'warn' : 'crit';
+          const cuStat = currUtil <= pq.currentUtilization.warn ? 'ok' : currUtil <= pq.currentUtilization.crit ? 'warn' : 'crit';
+          const rrStat = reactRatio <= pq.reactiveRatio.warn ? 'ok' : reactRatio <= pq.reactiveRatio.crit ? 'warn' : 'crit';
+          const pqiStat = pqi >= pq.pqiMin.warn ? 'ok' : pqi >= pq.pqiMin.crit ? 'warn' : 'crit';
+          const overall = [vdStat, cuStat, rrStat, pqiStat].includes('crit') ? 'crit' : [vdStat, cuStat, rrStat, pqiStat].includes('warn') ? 'warn' : 'ok';
+          const events = (s.voltageSagCount||0) + (s.voltageSwellCount||0);
+          
+          return `<tr><td><div class="machine-name"><strong>${m.name}</strong><span>${m.id}</span></div></td>
+            <td class="table-num">${voltDev.toFixed(2)}% <span class="status-badge ${vdStat}">${vdStat.toUpperCase()}</span></td>
+            <td class="table-num">${currUtil.toFixed(1)}% <span class="status-badge ${cuStat}">${cuStat.toUpperCase()}</span></td>
+            <td class="table-num">${reactRatio.toFixed(3)} <span class="status-badge ${rrStat}">${rrStat.toUpperCase()}</span></td>
+            <td class="table-num">${pqi.toFixed(3)} <span class="status-badge ${pqiStat}">${pqiStat.toUpperCase()}</span></td>
+            <td class="table-num">${events}</td>
+            <td class="table-center"><span class="status-badge ${overall}">${overall.toUpperCase()}</span></td></tr>`;
+        }).join('');
+        
+        qcards.innerHTML = this.allMachinesStats.map(item => {
+          const s = item.stats, m = item.machine;
+          const voltDev = s.voltageDeviation || 0, currUtil = s.currentUtilization || 0, reactRatio = s.reactiveRatio || 0, pqi = s.powerQualityIndex || 0;
+          const vdStat = voltDev <= pq.voltageDeviation.warn ? 'ok' : 'warn';
+          const cuStat = currUtil <= pq.currentUtilization.warn ? 'ok' : 'warn';
+          const rrStat = reactRatio <= pq.reactiveRatio.warn ? 'ok' : 'warn';
+          const pqiStat = pqi >= pq.pqiMin.warn ? 'ok' : 'warn';
+          
+          return `<div class="quality-card"><div class="label">${m.name}</div>
+            <div style="margin:3px 0"><div class="label">Voltage Deviation</div><div class="value">${voltDev.toFixed(2)}<span class="unit">%</span></div><div style="font-size:5.5pt;color:${vdStat === 'ok' ? 'var(--success)' : 'var(--warning)'}">Limit: ≤${pq.voltageDeviation.warn}% (IEC 60038)</div></div>
+            <div style="margin:3px 0"><div class="label">Current Utilization</div><div class="value">${currUtil.toFixed(1)}<span class="unit">%</span></div><div style="font-size:5.5pt;color:${cuStat === 'ok' ? 'var(--success)' : 'var(--warning)'}">Rating: ${m.max_current}A • Warn: ${pq.currentUtilization.warn}%</div></div>
+            <div style="margin:3px 0"><div class="label">Reactive Ratio (tan φ)</div><div class="value">${reactRatio.toFixed(3)}</div><div style="font-size:5.5pt;color:${rrStat === 'ok' ? 'var(--success)' : 'var(--warning)'}">PF: ${(s.avgPowerFactor||0).toFixed(3)} • Limit: ≤${pq.reactiveRatio.warn}</div></div>
+            <div style="margin:3px 0"><div class="label">Power Quality Index</div><div class="value">${pqi.toFixed(3)}</div><div style="font-size:5.5pt;color:${pqiStat === 'ok' ? 'var(--success)' : 'var(--warning)'}">Target: ≥${pq.pqiMin.warn} • Composite</div></div>
+            <div style="margin:3px 0;border-top:1px dashed var(--border);padding-top:3px"><div class="label">Voltage Events</div><div class="value" style="font-size:7pt">Sag: <span class="${s.voltageSagCount>0 ? 'status-warn' : 'status-ok'}">${s.voltageSagCount||0}</span> Swell: <span class="${s.voltageSwellCount>0 ? 'status-warn' : 'status-ok'}">${s.voltageSwellCount||0}</span></div></div>
+          </div>`;
+        }).join('');
+      },
+      
+      renderReliability() {
+        const container = document.getElementById('reliabilityGrid'); if (!container) return;
+        container.innerHTML = this.allMachinesStats.map(item => {
+          const s = item.stats, m = item.machine;
+          const riskScore = this._calculateRiskScore(s, this.THRESHOLDS[m.machine?.profile || 'industrial']);
+          const riskColor = riskScore >= 80 ? 'crit' : riskScore >= 60 ? 'warn' : 'ok';
+          return `<div class="reliability-card"><div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border)"><div style="font-weight:500;font-size:var(--text-sm)">${m.name}</div><span class="status-badge ${riskColor}">Risk: ${riskScore}</span></div><div class="reliability-item" style="margin:8px 0;border:none;background:transparent;padding:0"><div class="val">${s.uptimePercent.toFixed(1)}%</div><div class="lbl">Availability</div></div><div class="reliability-item" style="margin:8px 0;border:none;background:transparent;padding:0"><div class="val">${((s.mtbfEstimate || this.CONSTANTS.mtbfBaseHours) / 8760).toFixed(1)}</div><div class="lbl">MTBF (years)</div></div><div class="reliability-item" style="margin:8px 0;border:none;background:transparent;padding:0"><div class="val" style="color:var(--${s.tripCount > 0 ? 'danger' : 'success'})">${s.tripCount}</div><div class="lbl">Trip Events</div></div></div>`;
+        }).join('');
+      },
+      
+      renderSustainability() {
+        const totalEnergy = this.allMachinesStats.reduce((sum, i) => sum + (i.stats?.totalEnergy || 0), 0);
+        const totalCarbon = this.allMachinesStats.reduce((sum, i) => sum + (i.stats?.totalCarbon || 0), 0);
+        const totalCost = this.allMachinesStats.reduce((sum, i) => sum + (i.stats?.estimatedCost || 0), 0);
+        const avgEff = this.allMachinesStats.length ? this.allMachinesStats.reduce((sum, i) => { const s = i.stats; return sum + (s.efficiencyIndex || 0); }, 0) / this.allMachinesStats.length * 100 : 0;
+        document.getElementById('totalEnergy').textContent = totalEnergy.toFixed(1);
+        document.getElementById('totalCarbon').textContent = (totalCarbon/1000).toFixed(2) + 't';
+        document.getElementById('totalCost').textContent = 'Rp ' + totalCost.toLocaleString('id-ID');
+        document.getElementById('avgEfficiency').textContent = avgEff.toFixed(1) + '%';
+        const tbody = document.getElementById('energyTableBody'); if (!tbody) return;
+        tbody.innerHTML = this.allMachinesStats.map(item => {
+          const s = item.stats; const loadFactor = s.loadFactor || 0; const effIndex = s.efficiencyIndex || 0;
+          return `<tr><td><strong>${item.machine.name}</strong></td><td class="table-num">${(s.totalEnergy || 0).toFixed(2)} kWh</td><td class="table-num">${(s.totalCarbon || 0).toFixed(1)} kg</td><td class="table-num">Rp ${(s.estimatedCost || 0).toLocaleString('id-ID')}</td><td class="table-num">${(loadFactor * 100).toFixed(1)}%</td><td class="table-num">${effIndex.toFixed(3)}</td></tr>`;
+        }).join('');
+      },
+      
+      renderReportsList() {
+        const container = document.getElementById('reportsList'); if (!container) return;
+        const reports = [{ id: 'rpt-001', name: 'Daily Summary - Jan 15, 2025', date: '2025-01-15', pages: 3, status: 'ok' }, { id: 'rpt-002', name: 'Weekly Compliance - Week 2', date: '2025-01-14', pages: 5, status: 'warn' }, { id: 'rpt-003', name: 'Monthly Review - Dec 2024', date: '2024-12-31', pages: 8, status: 'ok' }, { id: 'rpt-004', name: 'Power Quality Audit Q4', date: '2024-12-15', pages: 12, status: 'crit' }];
+        container.innerHTML = reports.map(r => `<div class="report-item"><div class="report-info"><div class="report-icon"><i class="fas fa-file-pdf"></i></div><div class="report-details"><h4>${r.name}</h4><span>Generated: ${new Date(r.date).toLocaleDateString('id-ID')} • ${r.pages} pages</span></div></div><div class="report-actions"><button title="View" onclick="Report.viewReport('${r.id}')"><i class="fas fa-eye"></i></button><button title="Download" onclick="Report.downloadReport('${r.id}')"><i class="fas fa-download"></i></button><button title="Delete" class="btn-danger" style="padding:6px" onclick="Report.deleteReport('${r.id}')"><i class="fas fa-trash"></i></button></div></div>`).join('');
+      },
+
+      async renderA4ToBody(startDate, endDate, granularity, thresholdProfile) {
+        const container = document.getElementById('a4PrintContainer'); if (!container) return;
+        const thresholds = this.THRESHOLDS[thresholdProfile];
+        const pq = thresholds.powerQuality;
+        const firstMachine = this.allMachines[0];
+        const dateStr = startDate && endDate ? this.formatDate(startDate) + ' – ' + this.formatDate(endDate) : 'Date range not set';
+        
+        const page1 = `<div class="section"><div class="section-title"><span class="num">01</span> Technical Specifications</div><table class="spec-table"><tbody><tr><td class="label">Model / Type</td><td class="value">MCB-3P-63A <span class="unit">Industrial Grade</span></td></tr><tr><td class="label">Rated Voltage (Ue)</td><td class="value">230/400 V AC <span class="unit">±10% IEC 60038</span></td></tr><tr><td class="label">Rated Current (In)</td><td class="value">${firstMachine?.max_current || 63} A <span class="unit">Curve C/D</span></td></tr><tr><td class="label">Breaking Capacity (Icu)</td><td class="value">6 kA <span class="unit">@ 230V AC IEC 60898-1</span></td></tr><tr><td class="label">Frequency</td><td class="value">50/60 Hz <span class="unit">Auto-detect</span></td></tr><tr><td class="label">Power Factor Range</td><td class="value">0.7 – 1.0 <span class="unit">Inductive/Capacitive</span></td></tr><tr><td class="label">Power Quality Limits</td><td class="value">Volt.Dev ≤5% / Curr.Util ≤85% <span class="unit">IEC 60038</span></td></tr><tr><td class="label">Operating Temperature</td><td class="value">-25°C to +70°C <span class="unit">IEC 60947-2</span></td></tr><tr><td class="label">Protection Class</td><td class="value">IP20 <span class="unit">IEC 60529</span></td></tr><tr><td class="label">Mounting</td><td class="value">DIN Rail 35mm <span class="unit">EN 60715</span></td></tr><tr><td class="label">Communication</td><td class="value">Modbus RTU / MQTT <span class="unit">TLS 1.3 Encrypted</span></td></tr><tr><td class="label">Sampling Rate</td><td class="value">1 sample/15s <span class="unit">Configurable</span></td></tr></tbody></table><div class="eng-note">Specs comply with IEC 60898-1, IEC 60947-2, IEC 60038. Calibration: CAL-${new Date().getFullYear()}-NXR-001</div></div><div class="section"><div class="section-title"><span class="num">02</span> Fleet Performance Summary <span class="badge ${this._getFleetStatus(thresholds)}">${this._getFleetStatusLabel(thresholds)}</span></div>${this.allMachinesStats.length === 0 ? '<div class="empty-state-old">No machines configured</div>' : '<table class="main-table"><thead><tr><th>Machine ID</th><th class="center">Loc</th><th class="num">I<sub>avg</sub> (A)</th><th class="num">V<sub>avg</sub> (V)</th><th class="num">P<sub>avg</sub> (kW)</th><th class="num">PF</th><th class="num">E<sub>tot</sub> (kWh)</th><th class="num">CO₂ (kg)</th><th class="center">Status</th></tr></thead><tbody>' + this.allMachinesStats.map(item => { const m = item.machine, s = item.stats; const loc = m.location?.code || '-'; const curStat = this.evaluateStatus(s.avgCurrent, thresholds.current); const voltStat = this.evaluateStatus(s.avgVoltage, thresholds.voltage, 'range'); const overall = curStat.status === 'crit' || voltStat.status === 'crit' ? 'crit' : curStat.status === 'warn' || voltStat.status === 'warn' ? 'warn' : 'ok'; return '<tr><td><strong>' + m.name + '</strong><br><span style="font-size:6pt;color:#666">' + m.id + '</span></td><td class="center">' + loc + '</td><td class="num">' + (s.avgCurrent?.toFixed(2) || '0.00') + '</td><td class="num">' + (s.avgVoltage?.toFixed(1) || '0.0') + '</td><td class="num">' + ((s.avgPower/1000)?.toFixed(2) || '0.00') + '</td><td class="num">' + (s.avgPowerFactor?.toFixed(3) || '0.000') + '</td><td class="num">' + (s.totalEnergy?.toFixed(2) || '0.00') + '</td><td class="num">' + (s.totalCarbon?.toFixed(1) || '0.0') + '</td><td class="center"><span class="status-' + overall + '">' + overall.toUpperCase() + '</span></td></tr>'; }).join('') + '</tbody></table>'}</div>`;
+        
+        const page2 = `<div class="section"><div class="section-title"><span class="num">03</span> Power Quality Metrics</div><div class="quality-grid">${this.allMachinesStats.map(item => { 
+          const s = item.stats, m = item.machine;
+          const voltDev = s.voltageDeviation || 0, currUtil = s.currentUtilization || 0, reactRatio = s.reactiveRatio || 0, pqi = s.powerQualityIndex || 0;
+          const vdColor = voltDev <= pq.voltageDeviation.warn ? '#2cb67d' : '#ffb800';
+          const cuColor = currUtil <= pq.currentUtilization.warn ? '#2cb67d' : '#ffb800';
+          const rrColor = reactRatio <= pq.reactiveRatio.warn ? '#2cb67d' : '#ffb800';
+          const pqiColor = pqi >= pq.pqiMin.warn ? '#2cb67d' : '#ffb800';
+          return '<div class="quality-card"><div class="label">' + m.name + '</div>' +
+            '<div style="margin:3px 0"><div class="label">Voltage Deviation</div><div class="value">' + voltDev.toFixed(2) + '<span class="unit">%</span></div><div style="font-size:5.5pt;color:' + vdColor + '">Limit: ≤' + pq.voltageDeviation.warn + '% (IEC 60038)</div></div>' +
+            '<div style="margin:3px 0"><div class="label">Current Utilization</div><div class="value">' + currUtil.toFixed(1) + '<span class="unit">%</span></div><div style="font-size:5.5pt;color:' + cuColor + '">Rating: ' + (m.max_current||63) + 'A</div></div>' +
+            '<div style="margin:3px 0"><div class="label">Reactive Ratio (tan φ)</div><div class="value">' + reactRatio.toFixed(3) + '</div><div style="font-size:5.5pt;color:' + rrColor + '">PF: ' + (s.avgPowerFactor||0).toFixed(3) + '</div></div>' +
+            '<div style="margin:3px 0"><div class="label">Power Quality Index</div><div class="value">' + pqi.toFixed(3) + '</div><div style="font-size:5.5pt;color:' + pqiColor + '">Target: ≥' + pq.pqiMin.warn + '</div></div>' +
+            '<div style="margin:3px 0;border-top:1px dashed #ddd;padding-top:3px"><div class="label" style="font-size:6pt">Events: Sag=' + (s.voltageSagCount||0) + ' | Swell=' + (s.voltageSwellCount||0) + '</div></div></div>'; 
+        }).join('')}</div><div class="eng-note">Power Quality Index = (PF×0.4)+(Volt.Comp×0.35)+(Curr.Comp×0.25). Voltage Deviation per IEC 60038 ±10%. Reactive Ratio tan(φ)=√(1−PF²)/PF.</div></div><div class="section"><div class="section-title"><span class="num">04</span> Operational Compliance</div><table class="threshold-table"><thead><tr><th>Parameter</th><th>Measured</th><th>Threshold</th><th>Compliance</th><th>Status</th></tr></thead><tbody>${this.allMachinesStats.map(item => { 
+          const s = item.stats, m = item.machine.name;
+          const vComp = s.voltageCompliance, cComp = s.currentCompliance, pfComp = s.pfCompliance;
+          const vStatus = vComp>=99?'ok':vComp>=95?'warn':'crit';
+          const cStatus = cComp>=99?'ok':cComp>=95?'warn':'crit';
+          const pfStatus = pfComp>=99?'ok':pfComp>=95?'warn':'crit';
+          const voltDev = s.voltageDeviation || 0, currUtil = s.currentUtilization || 0, reactRatio = s.reactiveRatio || 0, pqi = s.powerQualityIndex || 0;
+          const vdComp = voltDev <= pq.voltageDeviation.warn ? 100 : voltDev <= pq.voltageDeviation.crit ? ((pq.voltageDeviation.crit - voltDev)/(pq.voltageDeviation.crit - pq.voltageDeviation.warn)*100).toFixed(0) : 0;
+          const cuComp = currUtil <= pq.currentUtilization.warn ? 100 : currUtil <= pq.currentUtilization.crit ? ((pq.currentUtilization.crit - currUtil)/(pq.currentUtilization.crit - pq.currentUtilization.warn)*100).toFixed(0) : 0;
+          const rrComp = reactRatio <= pq.reactiveRatio.warn ? 100 : reactRatio <= pq.reactiveRatio.crit ? ((pq.reactiveRatio.crit - reactRatio)/(pq.reactiveRatio.crit - pq.reactiveRatio.warn)*100).toFixed(0) : 0;
+          const pqiComp = pqi >= pq.pqiMin.warn ? 100 : pqi >= pq.pqiMin.crit ? ((pqi - pq.pqiMin.crit)/(pq.pqiMin.warn - pq.pqiMin.crit)*100).toFixed(0) : 0;
+          const vdStatus = voltDev <= pq.voltageDeviation.warn ? 'ok' : voltDev <= pq.voltageDeviation.crit ? 'warn' : 'crit';
+          const cuStatus = currUtil <= pq.currentUtilization.warn ? 'ok' : currUtil <= pq.currentUtilization.crit ? 'warn' : 'crit';
+          const rrStatus = reactRatio <= pq.reactiveRatio.warn ? 'ok' : reactRatio <= pq.reactiveRatio.crit ? 'warn' : 'crit';
+          const pqiStatus = pqi >= pq.pqiMin.warn ? 'ok' : pqi >= pq.pqiMin.crit ? 'warn' : 'crit';
+          return '<tr><td><strong>' + m + '</strong><br><span style="font-size:6pt;color:#666">Voltage</span></td><td class="num">' + (s.avgVoltage?.toFixed(1) || '0.0') + ' V</td><td class="num">' + thresholds.voltage.min + '–' + thresholds.voltage.max + ' V</td><td class="num">' + vComp + '%</td><td class="center"><span class="status-' + vStatus + '">' + (vComp>=99?'✓':vComp>=95?'⚠':'✗') + '</span></td></tr>' +
+            '<tr><td><span style="font-size:6pt;color:#666">Current Load</span></td><td class="num">' + (s.avgCurrent?.toFixed(2) || '0.00') + ' A</td><td class="num">≤' + thresholds.current.warn + ' A (warn)</td><td class="num">' + cComp + '%</td><td class="center"><span class="status-' + cStatus + '">' + (cComp>=99?'✓':cComp>=95?'⚠':'✗') + '</span></td></tr>' +
+            '<tr><td><span style="font-size:6pt;color:#666">Power Factor</span></td><td class="num">' + (s.avgPowerFactor?.toFixed(3) || '0.000') + '</td><td class="num">≥' + thresholds.powerFactor.min + '</td><td class="num">' + pfComp + '%</td><td class="center"><span class="status-' + pfStatus + '">' + (pfComp>=99?'✓':pfComp>=95?'⚠':'✗') + '</span></td></tr>' +
+            '<tr><td><span style="font-size:6pt;color:#666">Voltage Deviation</span></td><td class="num">' + voltDev.toFixed(2) + ' %</td><td class="num">≤' + pq.voltageDeviation.warn + ' %</td><td class="num">' + vdComp + '%</td><td class="center"><span class="status-' + vdStatus + '">' + (vdStatus==='ok'?'✓':vdStatus==='warn'?'⚠':'✗') + '</span></td></tr>' +
+            '<tr><td><span style="font-size:6pt;color:#666">Current Utilization</span></td><td class="num">' + currUtil.toFixed(1) + ' %</td><td class="num">≤' + pq.currentUtilization.warn + ' %</td><td class="num">' + cuComp + '%</td><td class="center"><span class="status-' + cuStatus + '">' + (cuStatus==='ok'?'✓':cuStatus==='warn'?'⚠':'✗') + '</span></td></tr>' +
+            '<tr><td><span style="font-size:6pt;color:#666">Reactive Ratio (tan φ)</span></td><td class="num">' + reactRatio.toFixed(3) + '</td><td class="num">≤' + pq.reactiveRatio.warn + '</td><td class="num">' + rrComp + '%</td><td class="center"><span class="status-' + rrStatus + '">' + (rrStatus==='ok'?'✓':rrStatus==='warn'?'⚠':'✗') + '</span></td></tr>' +
+            '<tr><td><span style="font-size:6pt;color:#666;font-weight:600">Power Quality Index</span></td><td class="num"><strong>' + pqi.toFixed(3) + '</strong></td><td class="num">≥' + pq.pqiMin.warn + '</td><td class="num">' + pqiComp + '%</td><td class="center"><span class="status-' + pqiStatus + '">' + (pqiStatus==='ok'?'✓':pqiStatus==='warn'?'⚠':'✗') + '</span></td></tr>';
+        }).join('')}</tbody></table></div>`;
+
+        // ✅ SIGNATURE BLOCK menggunakan signatureData
+        const signatureBlock = this.renderSignatureBlock();
+
+        const page3 = `<div class="section"><div class="section-title"><span class="num">05</span> Reliability & Maintenance Indicators</div><div class="reliability-grid">${this.allMachinesStats.map(item => { 
+          const s = item.stats, m = item.machine; 
+          const availability = s.uptimePercent; 
+          const mtbf = s.mtbfEstimate || this.CONSTANTS.mtbfBaseHours; 
+          const riskScore = this._calculateRiskScore(s, thresholds); 
+          const riskColor = riskScore>=80 ? '#c00' : riskScore>=60 ? '#ffb800' : '#2cb67d'; 
+          const tripColor = s.tripCount>0 ? '#c00' : '#2cb67d'; 
+          return '<div class="reliability-item" style="border-color:' + riskColor + '"><div class="lbl">' + m.name + '</div><div class="val">' + availability.toFixed(1) + '%</div><div class="lbl">Availability</div></div><div class="reliability-item"><div class="lbl">MTBF Est.</div><div class="val">' + (mtbf/8760).toFixed(1) + '<span style="font-size:7pt">y</span></div><div class="lbl">' + mtbf.toFixed(0) + ' hours</div></div><div class="reliability-item"><div class="lbl">Trip Events</div><div class="val" style="color:' + tripColor + '">' + s.tripCount + '</div><div class="lbl">in period</div></div><div class="reliability-item"><div class="lbl">Risk Score</div><div class="val" style="color:' + riskColor + '">' + riskScore + '</div><div class="lbl">0-100 scale</div></div>'; 
+        }).join('')}</div><div class="eng-note" style="margin-top:6px">MTBF per MIL-HDBK-217F. Risk Score = f(load, PQ, thermal, events). PM interval: ${(this.CONSTANTS.mtbfBaseHours * 0.1 / 8760).toFixed(1)} years.</div></div><div class="section"><div class="section-title"><span class="num">06</span> Engineering Alerts</div>${this._generateAlerts(thresholds).length === 0 ? '<div style="padding:6px;color:#2cb67d;font-weight:600">✓ All systems within tolerances</div>' : this._generateAlerts(thresholds).map(a => '<div class="alert-panel-old ' + a.type + '"><div class="alert-title">[' + a.type.toUpperCase() + '] ' + a.machine + '</div><div>' + a.msg + '</div></div>').join('')}</div><div class="section"><div class="section-title"><span class="num">07</span> Energy & Sustainability Metrics</div><table class="main-table"><thead><tr><th>Machine</th><th class="num">Energy (kWh)</th><th class="num">CO₂ (kg)</th><th class="num">Cost (IDR)</th><th class="num">Load Factor</th><th class="num">Eff. Index</th></tr></thead><tbody>${this.allMachinesStats.map(item => { 
+          const s = item.stats; 
+          const loadFactor = s.loadFactor || 0; 
+          const efficiencyIndex = s.efficiencyIndex || 0; 
+            return '<tr><td><strong>' + item.machine.name + '</strong></td><td class="num">' + (s.totalEnergy?.toFixed(2) || '0.00') + '</td><td class="num">' + (s.totalCarbon?.toFixed(1) || '0.0') + '</td><td class="num">' + (s.estimatedCost?.toLocaleString('id-ID') || '0') + '</td><td class="num">' + (loadFactor*100).toFixed(1) + '%</td><td class="num">' + efficiencyIndex.toFixed(3) + '</td></tr>'; 
+            }).join('')}</tbody></table><div class="eng-note">Carbon: ${this.CONSTANTS.carbonFactors.default} kg CO₂/kWh (Indonesian grid, IPCC 2006). Load Factor = P<sub>avg</sub>/P<sub>peak</sub>; optimal 0.6-0.85. Efficiency Index = PF×0.4 + LF×0.35 + DataQuality×0.25 (target ≥0.75).</div><div style="margin-top:8px;font-size:5.5pt;color:#666;border-top:1px solid #ddd;padding-top:4px"><strong>References:</strong> IPCC 2006 Guidelines Vol.2; IEEE 1459-2010; IEC 62053-21:2020; IEC 60038; MIL-HDBK-217F; PLN Tariff 2024</div></div>${signatureBlock}`;
+          const header = `<div class="header"><div class="header-left"><div class="company">PT NEXORA TEKNOLOGI INDONESIA</div><div>Engineering Division • R&D Monitoring Systems</div><div>Jl. Teknologi No. 123, Jakarta Selatan 12940 • Telp: (021) 1234-5678</div><div style="margin-top:2px;font-size:6pt;color:#555">ISO 9001:2015 • IEC 62443 Compliant</div></div><div class="header-center"><h1>MCB Engineering Performance Report</h1><div class="doc-code">DOC: ENG-RPT-MCB-${new Date().toISOString().slice(0,10).replace(/-/g,'')} • REV: 2.2</div></div><div class="header-right"><div style="font-size:10pt;font-weight:800;color:#000">NEXORA<span style="color:#6c63ff">TECH</span></div><div style="font-size:6pt;color:#666;margin-top:2px">Asset Integrity Management</div></div></div><div class="info-bar"><div><strong>Period:</strong> ${dateStr}</div><div><strong>Granularity:</strong> ${granularity}</div><div><strong>Profile:</strong> ${thresholdProfile}</div><div><strong>Machines:</strong> ${this.allMachines.length}</div><div><strong>Σ Energy:</strong> ${this.allMachinesStats.reduce((sum,i)=>sum+(i.stats?.totalEnergy||0),0).toFixed(1)} kWh</div><div><strong>Σ CO₂:</strong> ${this.allMachinesStats.reduce((sum,i)=>sum+(i.stats?.totalCarbon||0),0).toFixed(1)} kg</div></div>`;
+          const footer = (pageNum, totalPages) => `<div class="page-footer-old"><div class="stamp">ENGINEERING CONFIDENTIAL • NEXORA-RPT-ENG</div><div>Generated: ${new Date().toLocaleString('id-ID')} • Page ${pageNum}/${totalPages}</div></div>`;
+        
+        const pages = [
+          `<div class="a4-paper active" id="a4-page-1">${header}${page1}${footer(1, 3)}</div>`,
+          `<div class="a4-paper" id="a4-page-2">${header}${page2}${footer(2, 3)}</div>`,
+          `<div class="a4-paper" id="a4-page-3">${header}${page3}${footer(3, 3)}</div>`
+        ];
+        
+        container.innerHTML = pages.join('');
+        this.pages = container.querySelectorAll('.a4-paper');
+        this.currentPage = 1;
+        this.updateNav();
+      },
+
+      evaluateStatus(value, thresholds, type = 'max') {
+        if (value == null) return { status: 'na', label: 'N/A' };
+        if (type === 'range') { if (value < thresholds.min || value > thresholds.max) return { status: 'crit', label: 'OUT' }; if (value < thresholds.min * 1.02 || value > thresholds.max * 0.98) return { status: 'warn', label: 'EDGE' }; return { status: 'ok', label: 'OK' }; }
+        if (value >= thresholds.crit) return { status: 'crit', label: 'CRIT' };
+        if (value >= thresholds.warn) return { status: 'warn', label: 'WARN' };
+        return { status: 'ok', label: 'OK' };
+      },
+      
+      _getFleetStatus(thresholds) { const critical = this.allMachinesStats.filter(i => { const s = i.stats; return s.avgCurrent > thresholds.current.crit || s.avgVoltage < thresholds.voltage.min || s.avgVoltage > thresholds.voltage.max; }).length; if (critical > 0) return 'danger'; const warning = this.allMachinesStats.filter(i => { const s = i.stats; return s.avgCurrent > thresholds.current.warn || s.dataCompleteness < 90; }).length; return warning > 0 ? 'warning' : 'success'; },
+      _getFleetStatusLabel(thresholds) { const status = this._getFleetStatus(thresholds); return status === 'danger' ? 'REQUIRES ATTENTION' : status === 'warning' ? 'MONITOR CLOSELY' : 'NOMINAL'; },
+      
+      _calculateRiskScore(stats, thresholds) { 
+        let score = 0; 
+        score += Math.min(30, (stats.avgCurrent / thresholds.current.crit) * 35); 
+        if (stats.voltageDeviation != null && stats.voltageDeviation > thresholds.powerQuality.voltageDeviation.warn) score += 10;
+        if (stats.currentUtilization != null && stats.currentUtilization > thresholds.powerQuality.currentUtilization.warn) score += 10;
+        if (stats.reactiveRatio != null && stats.reactiveRatio > thresholds.powerQuality.reactiveRatio.warn) score += 5;
+        score += Math.min(5, (stats.voltageSagCount + stats.voltageSwellCount) * 2); 
+        if (stats.tripCount > 0) score += 15; 
+        if (stats.uptimePercent < 99.5) score += 10; 
+        if (stats.dataCompleteness < 95) score += 20 - stats.dataCompleteness * 0.2; 
+        return Math.min(100, Math.round(score)); 
+      },
+      
+      _generateAlerts(thresholds) { 
+        const alerts = []; 
+        const pq = thresholds.powerQuality;
+        this.allMachinesStats.forEach(item => { 
+          const s = item.stats, m = item.machine.name; 
+          if (s.avgCurrent >= thresholds.current.crit) alerts.push({ type: 'crit', machine: m, msg: `Current overload: ${s.avgCurrent.toFixed(1)}A ≥ ${thresholds.current.crit}A` }); 
+          else if (s.avgCurrent >= thresholds.current.warn) alerts.push({ type: 'warn', machine: m, msg: `High load: ${s.avgCurrent.toFixed(1)}A approaching ${thresholds.current.warn}A` }); 
+          if (s.avgVoltage < thresholds.voltage.min || s.avgVoltage > thresholds.voltage.max) alerts.push({ type: 'crit', machine: m, msg: `Voltage out of spec: ${s.avgVoltage.toFixed(1)}V` }); 
+          if (s.avgPowerFactor < thresholds.powerFactor.min) alerts.push({ type: 'warn', machine: m, msg: `Low PF: ${s.avgPowerFactor.toFixed(3)} < ${thresholds.powerFactor.min}` }); 
+          if (s.voltageDeviation != null && s.voltageDeviation > pq.voltageDeviation.crit) alerts.push({ type: 'crit', machine: m, msg: `Voltage deviation critical: ${s.voltageDeviation.toFixed(2)}% > ${pq.voltageDeviation.crit}%` });
+          else if (s.voltageDeviation != null && s.voltageDeviation > pq.voltageDeviation.warn) alerts.push({ type: 'warn', machine: m, msg: `Voltage deviation high: ${s.voltageDeviation.toFixed(2)}% > ${pq.voltageDeviation.warn}%` });
+          if (s.currentUtilization != null && s.currentUtilization > pq.currentUtilization.crit) alerts.push({ type: 'crit', machine: m, msg: `Current utilization critical: ${s.currentUtilization.toFixed(1)}% > ${pq.currentUtilization.crit}%` });
+          else if (s.currentUtilization != null && s.currentUtilization > pq.currentUtilization.warn) alerts.push({ type: 'warn', machine: m, msg: `High current utilization: ${s.currentUtilization.toFixed(1)}% > ${pq.currentUtilization.warn}%` });
+          if (s.reactiveRatio != null && s.reactiveRatio > pq.reactiveRatio.crit) alerts.push({ type: 'warn', machine: m, msg: `High reactive burden: tan(φ)=${s.reactiveRatio.toFixed(3)} > ${pq.reactiveRatio.crit}` });
+          if (s.powerQualityIndex != null && s.powerQualityIndex < pq.pqiMin.crit) alerts.push({ type: 'crit', machine: m, msg: `Poor power quality: PQI=${s.powerQualityIndex.toFixed(3)} < ${pq.pqiMin.crit}` });
+          else if (s.powerQualityIndex != null && s.powerQualityIndex < pq.pqiMin.warn) alerts.push({ type: 'warn', machine: m, msg: `Suboptimal PQ: PQI=${s.powerQualityIndex.toFixed(3)} < ${pq.pqiMin.warn}` });
+          if (s.dataCompleteness < 90) alerts.push({ type: 'warn', machine: m, msg: `Data gap: ${s.dataCompleteness.toFixed(1)}% completeness` }); 
+        }); 
+        return alerts; 
+      },
+      
+      updateMeta() { const sd = document.getElementById('startDate')?.value, ed = document.getElementById('endDate')?.value, profile = document.getElementById('thresholdProfile')?.value || 'industrial'; if (sd && ed) { const start = new Date(sd).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }), end = new Date(ed).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); document.getElementById('dashPeriod').textContent = `${start} – ${end}`; } document.getElementById('dashProfile').textContent = profile.charAt(0).toUpperCase() + profile.slice(1); document.getElementById('dashMachines').textContent = this.allMachines.length; },
+      updateNav() { const nav = document.getElementById('pageNav'); if (!nav) return; const totalPages = this.pages?.length || 1; document.getElementById('pageInfo').textContent = `${this.currentPage} / ${totalPages}`; document.getElementById('btnPrev').disabled = this.currentPage <= 1; document.getElementById('btnNext').disabled = this.currentPage >= totalPages; nav.style.display = totalPages > 1 ? 'flex' : 'none'; },
+      goPage(dir) { const totalPages = this.pages?.length || 1; const np = this.currentPage + dir; if (np >= 1 && np <= totalPages) { if (this.pages[this.currentPage-1]) this.pages[this.currentPage-1].classList.remove('active'); this.currentPage = np; if (this.pages[np-1]) this.pages[np-1].classList.add('active'); this.updateNav(); } },
+      filterTable(query, tbodyId) { const tbody = document.getElementById(tbodyId); if (!tbody) return; const rows = tbody.querySelectorAll('tr'); const q = query.toLowerCase(); rows.forEach(row => { row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none'; }); },
+      toggleLoading(show) { const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.style.display = show ? 'flex' : 'none'; },
+      showAlert(msg, type = 'info') { const toast = document.createElement('div'); toast.style.cssText = `position:fixed;bottom:20px;right:20px;background:var(--bg-card);border-left:4px solid var(--${type==='warning'?'warning':type==='error'?'danger':'primary'});padding:12px 20px;border-radius:var(--radius-md);box-shadow:var(--shadow-lg);z-index:1000;animation:fadeIn 0.3s ease`; toast.innerHTML = `<span style="color:var(--text-main)">${msg}</span>`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000); },
+      formatDate(d) { return d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'; },
+
+      exportPDF() {
+        if (!this.pages || this.pages.length === 0) { this.showAlert('Generate report first', 'warning'); return; }
+        this.pages.forEach(p => { p.style.display = 'block'; p.style.visibility = 'visible'; });
+        document.querySelectorAll('.no-print, .app-wrapper, .main-content, .view-section, .topbar, .sidebar, #pageNav, #loadingOverlay').forEach(el => { el.style.display = 'none'; el.style.visibility = 'hidden'; });
+        void document.body.offsetWidth;
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            this.pages.forEach((p, i) => { p.style.display = (i === this.currentPage - 1) ? 'block' : 'none'; p.classList.toggle('active', i === this.currentPage - 1); });
+            document.querySelectorAll('.no-print, .app-wrapper, .main-content, .view-section, .topbar, .sidebar, #pageNav').forEach(el => { el.style.display = ''; el.style.visibility = ''; });
+          }, 800);
+        }, 500);
+      },
+      
+      viewReport(id) { this.showAlert(`Viewing report: ${id}`, 'info'); },
+      downloadReport(id) { this.showAlert(`Downloading: ${id}.pdf`, 'success'); },
+      deleteReport(id) { if (confirm('Delete this report?')) { this.showAlert(`Deleted: ${id}`, 'warning'); this.renderReportsList(); } },
+      toggleFavorite(id) { this.showAlert(`Toggled favorite: ${id}`, 'info'); },
+      scheduleReport() { this.showAlert('Schedule dialog would open here', 'info'); },
+
+      loadSettings() {
+        try {
+          const prefs = JSON.parse(localStorage.getItem('appPreferences') || '{}');
+          const apiEndpoint = localStorage.getItem('apiEndpoint');
+          const authToken = localStorage.getItem('authToken');
+          if (apiEndpoint) { document.getElementById('apiEndpoint').value = apiEndpoint; this.API_URL = apiEndpoint; }
+          if (authToken) { document.getElementById('authToken').value = '••••••••'; }
+          if (prefs.granularity) document.getElementById('granularity').value = prefs.granularity;
+          if (prefs.profile) { document.getElementById('thresholdProfile').value = prefs.profile; document.getElementById('prefProfile').value = prefs.profile; }
+          if (prefs.autoGenerate !== undefined) { document.getElementById('autoGenerate').checked = prefs.autoGenerate; }
+          if (prefs.theme) { document.getElementById('prefTheme').value = prefs.theme; this.applyTheme(prefs.theme); }
+          if (prefs.animations !== undefined) { document.getElementById('prefAnimations').checked = prefs.animations; document.body.style.setProperty('--transition-fast', prefs.animations ? '150ms' : '0ms'); }
+          if (prefs.compact !== undefined) { document.getElementById('prefCompact').checked = prefs.compact; document.body.classList.toggle('compact-mode', prefs.compact); }
+          if (prefs.pdfSize) document.getElementById('pdfSize').value = prefs.pdfSize;
+          if (prefs.includeCharts !== undefined) document.getElementById('includeCharts').checked = prefs.includeCharts;
+          console.log('⚙️ Settings loaded from localStorage');
+        } catch (e) { console.warn('Failed to load settings:', e); }
+      },
+
+      saveSettings() {
+        const endpoint = document.getElementById('apiEndpoint')?.value?.trim();
+        const token = document.getElementById('authToken')?.value?.trim();
+        if (endpoint) { localStorage.setItem('apiEndpoint', endpoint); this.API_URL = endpoint; }
+        if (token && token !== '••••••••') { localStorage.setItem('authToken', token); }
+        this.showAlert('✅ API settings saved', 'success');
+      },
+
+      saveAllSettings() {
+        const prefs = {
+          granularity: document.getElementById('prefGranularity')?.value,
+          profile: document.getElementById('prefProfile')?.value,
+          autoGenerate: document.getElementById('autoGenerate')?.checked,
+          theme: document.getElementById('prefTheme')?.value,
+          animations: document.getElementById('prefAnimations')?.checked,
+          compact: document.getElementById('prefCompact')?.checked,
+          pdfSize: document.getElementById('pdfSize')?.value,
+          includeCharts: document.getElementById('includeCharts')?.checked
+        };
+        localStorage.setItem('appPreferences', JSON.stringify(prefs));
+        if (prefs.theme) this.applyTheme(prefs.theme);
+        if (prefs.animations !== undefined) { document.body.style.setProperty('--transition-fast', prefs.animations ? '150ms' : '0ms'); }
+        document.body.classList.toggle('compact-mode', prefs.compact);
+        this.showAlert('✅ All preferences saved & applied', 'success');
+      },
+
+      resetSettings() {
+        if (!confirm('Reset all settings to default values?')) return;
+        localStorage.removeItem('appPreferences'); localStorage.removeItem('apiEndpoint'); localStorage.removeItem('authToken');
+        document.getElementById('apiEndpoint').value = 'http://127.0.0.1:3001/api/auth';
+        document.getElementById('authToken').value = '';
+        document.getElementById('prefGranularity').value = 'daily';
+        document.getElementById('prefProfile').value = 'industrial';
+        document.getElementById('autoGenerate').checked = true;
+        document.getElementById('prefTheme').value = 'dark';
+        document.getElementById('prefAnimations').checked = true;
+        document.getElementById('prefCompact').checked = false;
+        document.getElementById('pdfSize').value = 'A4';
+        document.getElementById('includeCharts').checked = true;
+        this.API_URL = 'http://127.0.0.1:3001/api/auth';
+        this.applyTheme('dark');
+        document.body.style.setProperty('--transition-fast', '150ms');
+        document.body.classList.remove('compact-mode');
+        this.showAlert('🔄 Settings reset to default', 'warning');
+      },
+
+      async testConnection() {
+        const endpoint = document.getElementById('apiEndpoint')?.value?.trim() || this.API_URL;
+        const token = document.getElementById('authToken')?.value?.trim() || localStorage.getItem('authToken');
+        this.showAlert('🔌 Testing connection...', 'info');
+        try {
+          const res = await fetch(endpoint + '/mcb-machines', { headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) { this.showAlert(`✅ Connected! Found ${data.machines?.length || 0} machines`, 'success'); }
+            else { this.showAlert(`⚠️ API responded but: ${data.message || 'Unknown error'}`, 'warning'); }
+          } else { this.showAlert(`❌ HTTP ${res.status}: ${res.statusText}`, 'error'); }
+        } catch (e) {
+          if (e.message.includes('Failed to fetch') || endpoint.includes('127.0.0.1')) {
+            this.showAlert('🧪 Demo mode: Using simulated data (no backend detected)', 'info');
+          } else { this.showAlert(`❌ Connection failed: ${e.message}`, 'error'); }
+        }
+      },
+
+      applyTheme(theme) {
+        if (theme === 'light') {
+          document.documentElement.style.setProperty('--bg-main', '#f8fafc');
+          document.documentElement.style.setProperty('--bg-card', '#ffffff');
+          document.documentElement.style.setProperty('--bg-soft', '#f1f5f9');
+          document.documentElement.style.setProperty('--text-main', '#0f172a');
+          document.documentElement.style.setProperty('--text-soft', '#475569');
+          document.documentElement.style.setProperty('--border', 'rgba(0, 0, 0, 0.1)');
+        } else {
+          document.documentElement.style.setProperty('--bg-main', '#0F172A');
+          document.documentElement.style.setProperty('--bg-card', '#111827');
+          document.documentElement.style.setProperty('--bg-soft', '#1E293B');
+          document.documentElement.style.setProperty('--text-main', '#F8FAFC');
+          document.documentElement.style.setProperty('--text-soft', '#CBD5E1');
+          document.documentElement.style.setProperty('--border', 'rgba(255, 255, 255, 0.08)');
+        }
+      },
+
+      showHelp(topic) {
+        const content = {
+          'getting-started': { title: 'Getting Started', text: '<p>1. Set date range in topbar<br>2. Select granularity (Hourly/Daily/Weekly)<br>3. Choose threshold profile<br>4. Click "Generate" to fetch data<br>5. Navigate views via sidebar<br>6. Export to PDF anytime</p>' },
+          'thresholds': { title: 'Threshold Profiles', text: '<p><strong>Industrial Heavy:</strong> Higher current/power limits for heavy machinery<br><strong>Commercial:</strong> Balanced limits for office/retail<br><strong>Light Duty:</strong> Conservative limits for sensitive equipment<br><br>Customize thresholds in Settings → API Configuration</p>' },
+          'export': { title: 'Export & Print', text: '<p>• Click "Export PDF" or use browser print (Ctrl+P)<br>• A4 template preserved for professional output<br>• Print styles remove dashboard UI, keep report content<br>• For best results: use Chrome/Edge, "Save as PDF" destination<br>• Margins: Default, Scale: 100%, Background graphics: Enabled</p>' },
+          'troubleshooting': { title: 'Troubleshooting', text: '<p><strong>No data?</strong> Check API endpoint & auth token in Settings<br><strong>Slow loading?</strong> Reduce date range or use Weekly granularity<br><strong>Print layout broken?</strong> Ensure A4 paper size selected in print dialog<br><strong>Mobile issues?</strong> Use landscape mode for better table viewing</p>' },
+          'api': { title: 'API Reference', text: '<p><code>GET /mcb-machines</code><br>Returns: <code>{success: bool, machines: [{id, name, location, profile, max_current, electricity_rate}]}</code><br><br><code>GET /mcb-machines/:id/readings?start=&end=&granularity=</code><br>Returns: <code>{success: bool, readings: [{timestamp, current, voltage, power, power_factor, ...}]}</code><br><br>Auth: Bearer token in header</p>' },
+          'standards': { title: 'Compliance Standards', text: '<p>Reports align with:<br>• IEC 60898-1: Circuit-breaker specifications<br>• IEC 60947-2: Low-voltage switchgear<br>• IEC 60038: Standard voltages<br>• IEC 61000-4-30: Power quality measurement<br>• ISO 9001:2015: Quality management<br><br>All calculations follow international engineering practices</p>' }
+        };
+        const h = content[topic];
+        if (h) {
+          document.getElementById('helpTitle').textContent = h.title;
+          document.getElementById('helpContent').innerHTML = h.text;
+          document.getElementById('helpModal').style.display = 'block';
+          document.getElementById('helpModal').scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    };
+
+    // ===== EVENT LISTENERS =====
+    document.addEventListener('DOMContentLoaded', () => { 
+      Report.init();
+      window.addEventListener('beforeprint', () => {
+        document.querySelectorAll('.no-print, .app-wrapper, .main-content, .view-section, .topbar, .sidebar, #pageNav, #loadingOverlay').forEach(el => { 
+          el.style.display = 'none'; el.style.visibility = 'hidden'; 
+        });
+      });
+      window.addEventListener('afterprint', () => { 
+        Report.pages?.forEach((p, i) => { 
+          p.style.display = (i === Report.currentPage - 1) ? 'block' : 'none'; 
+          p.classList.toggle('active', i === Report.currentPage - 1); 
+        }); 
+        document.querySelectorAll('.no-print, .app-wrapper, .main-content, .view-section, .topbar, .sidebar, #pageNav').forEach(el => { 
+          el.style.display = ''; el.style.visibility = ''; 
+        }); 
+      });
+    });
+    
+    // Global scope for inline handlers
+    window.Report = Report;
+  </script>
+</body>
+</html>
